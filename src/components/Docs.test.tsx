@@ -11,6 +11,7 @@ describe("SIMPL documentation", () => {
     expect(html).toContain("Vier Schritte bis zur ersten Aufgabe");
     expect(html).toContain("Von der Idee bis „Fertig“");
     expect(html).toContain("Sichtbarkeit wird im Workspace geregelt");
+    expect(html).toContain('href="#schnellstart" class="active" aria-current="location"');
   });
 
   it("documents important behavior precisely", () => {

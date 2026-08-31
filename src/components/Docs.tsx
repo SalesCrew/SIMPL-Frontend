@@ -21,7 +21,9 @@ import {
   Users,
   X,
 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { findFaqMatches, type FaqGroup, type FaqMatch } from "../faq-search";
+import { activeDocsSection } from "../docs-scroll";
 import "./docs.css";
 
 const quickSteps = [
@@ -46,6 +48,18 @@ const quickSteps = [
     text: "Ziehe die Karte nach „In Arbeit“ oder markiere sie mit dem grünen Haken als erledigt.",
   },
 ];
+
+const docsSections = [
+  ["schnellstart", "Schnellstart"],
+  ["grundprinzip", "Grundprinzip"],
+  ["karten", "Karten bearbeiten"],
+  ["zusammenarbeit", "Zusammenarbeit"],
+  ["finden", "Suchen & finden"],
+  ["zugriff", "Zugriff & Sicherheit"],
+  ["kurzbefehle", "Kurzbefehle"],
+  ["fragen", "Fragen & Antworten"],
+] as const;
+type DocsSectionId = (typeof docsSections)[number][0];
 
 export const faqGroups: FaqGroup[] = [
   {
@@ -137,8 +151,39 @@ export function DocsPage({ search = "", onSearchChange = ignoreSearch }: {
   onSearchChange?: (value: string) => void;
 }) {
   const matches = findFaqMatches(faqGroups, search);
+  const pageRef = useRef<HTMLDivElement>(null);
+  const [activeSection, setActiveSection] = useState<DocsSectionId>(docsSections[0][0]);
+  useEffect(() => {
+    const page = pageRef.current;
+    if (!page) return;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const pageTop = page.getBoundingClientRect().top;
+      const marker = Math.min(150, page.clientHeight * 0.28);
+      const next = activeDocsSection(
+        docsSections.map(([id]) => ({
+          id,
+          top: (page.querySelector<HTMLElement>(`#${id}`)?.getBoundingClientRect().top ?? pageTop) - pageTop,
+        })),
+        marker,
+      );
+      if (next) setActiveSection((current) => current === next ? current : next);
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    page.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    schedule();
+    return () => {
+      page.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, []);
   return (
-    <div className="docs-page">
+    <div className="docs-page" ref={pageRef}>
       <header className="docs-hero">
         <div className="docs-hero-copy">
           <span className="docs-eyebrow"><BookOpen size={14} /> SIMPL HANDBUCH</span>
@@ -158,14 +203,13 @@ export function DocsPage({ search = "", onSearchChange = ignoreSearch }: {
       <div className="docs-layout">
         <aside className="docs-toc" aria-label="Inhalt">
           <b>Auf dieser Seite</b>
-          <a href="#schnellstart">Schnellstart</a>
-          <a href="#grundprinzip">Grundprinzip</a>
-          <a href="#karten">Karten bearbeiten</a>
-          <a href="#zusammenarbeit">Zusammenarbeit</a>
-          <a href="#finden">Suchen & finden</a>
-          <a href="#zugriff">Zugriff & Sicherheit</a>
-          <a href="#kurzbefehle">Kurzbefehle</a>
-          <a href="#fragen">Fragen & Antworten</a>
+          {docsSections.map(([id, label]) => <a
+            key={id}
+            href={`#${id}`}
+            className={activeSection === id ? "active" : undefined}
+            aria-current={activeSection === id ? "location" : undefined}
+            onClick={() => setActiveSection(id)}
+          >{label}</a>)}
         </aside>
 
         <article className="docs-content">
