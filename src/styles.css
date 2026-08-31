@@ -170,8 +170,7 @@ a:focus-visible {
   outline-offset: 3px;
 }
 input:focus,
-textarea:focus,
-select:focus {
+textarea:focus {
   outline: none;
   border-color: var(--field-focus-border);
   box-shadow: var(--field-focus-shadow);
@@ -302,8 +301,10 @@ select {
 }
 .workspace-switch:hover,
 .workspace-switch[data-state="open"] {
-  border-color: #cbd7c7;
   background: #f6f9f3;
+}
+.workspace-switch:hover {
+  border-color: #cbd7c7;
 }
 .workspace-popover {
   z-index: 90;
@@ -353,8 +354,7 @@ select {
   background: #f7f9f4;
 }
 .workspace-option:focus-visible {
-  outline: 2px solid #7f9e70;
-  outline-offset: -2px;
+  background: #eaf1e3;
 }
 .workspace-option.selected {
   background: #f1f6ed;
@@ -1900,7 +1900,7 @@ textarea {
 .field :is(input, textarea, select):where(:hover:not(:disabled)) {
   border-color: var(--field-border-hover);
 }
-.field :is(input, textarea, select):focus {
+.field :is(input, textarea):focus {
   border-color: var(--field-focus-border);
   box-shadow: var(--field-focus-shadow);
   outline: none;
@@ -3024,9 +3024,8 @@ textarea {
   background: #f8faf5;
 }
 .select-trigger[data-state="open"] {
-  border-color: #bdcfb1;
-  box-shadow: 0 0 0 3px #edf3e7;
-  background: #fff;
+  box-shadow: none;
+  background: #f8faf5;
 }
 .select-trigger[data-disabled] {
   color: #9aa58f;
@@ -3174,9 +3173,24 @@ textarea {
 }
 .select-field:not(:disabled):is(:focus, [data-state="open"]) {
   outline: none;
-  border-color: var(--field-focus-border);
-  box-shadow: var(--field-focus-shadow);
-  background: #fff;
+  border-color: var(--field-border);
+  box-shadow: none;
+  background: #f8faf5;
+}
+/* Dropdowns use a quiet fill, never a focus stroke; text inputs keep their ring. */
+:is(.select-trigger, button[aria-haspopup], .workspace-popover button, .filter-panel button, select):is(:focus, :focus-visible) {
+  outline: none;
+  outline-offset: 0;
+  box-shadow: none;
+}
+:is(.select-trigger, button[aria-haspopup], .workspace-popover button, .filter-panel button, select):focus-visible {
+  background-color: #eaf1e3;
+}
+.field select:focus {
+  border-color: var(--field-border);
+}
+:is(.select-popover, .workspace-popover, .filter-panel):focus {
+  outline: none;
 }
 .select-field[data-disabled] {
   opacity: 1;
