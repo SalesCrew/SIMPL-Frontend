@@ -368,8 +368,14 @@ export function CardEditor({
               </button>
               <button
                 type="button"
-                disabled={busy || uploading || current.role !== "admin"}
+                disabled={busy || uploading}
                 className={card.reviewed_at ? "blue-text" : ""}
+                aria-pressed={!!card.reviewed_at}
+                aria-label={
+                  card.reviewed_at
+                    ? "Wahrgenommen-Markierung entfernen"
+                    : "Karte als wahrgenommen markieren"
+                }
                 onClick={() =>
                   void mutate({
                     type: "card.review",
@@ -379,7 +385,9 @@ export function CardEditor({
                 }
               >
                 <CheckCheck size={17} />
-                {card.reviewed_at ? "Vom Admin gelesen" : "Noch nicht gelesen"}
+                {card.reviewed_at
+                  ? "Karte wurde wahrgenommen"
+                  : "Noch nicht wahrgenommen"}
               </button>
             </div>
           )}

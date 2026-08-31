@@ -32,15 +32,15 @@ const fixture = () => {
   return { state, card };
 };
 
-function renderEditor(state: BoardState, card?: Card) {
+function renderEditor(state: BoardState, card?: Card, profileIndex = 0, busy = false) {
   return renderToStaticMarkup(
     <TooltipProvider>
       <CardEditor
         state={state}
-        current={state.profiles[0]}
+        current={state.profiles[profileIndex]}
         card={card}
         workspaceId="salescrew"
-        busy={false}
+        busy={busy}
         mutate={async () => true}
         close={() => {}}
         editLabels={() => {}}
@@ -51,6 +51,21 @@ function renderEditor(state: BoardState, card?: Card) {
 }
 
 describe("CardEditor creation header", () => {
+  it.each([0, 2])("allows acknowledgement on and off for each role (profile=%s)", (index) => {
+    const { state, card } = fixture();
+    for (const reviewed of [false, true]) {
+      card.reviewed_at = reviewed ? card.created_at : null;
+      const html = renderEditor(state, card, index);
+      const button = html.match(/<button[^>]*aria-label="(?:Wahrgenommen-Markierung entfernen|Karte als wahrgenommen markieren)"[^>]*>[\s\S]*?<\/button>/)?.[0];
+      expect(button).toBeTruthy();
+      expect(button).not.toContain("disabled");
+      expect(button).toContain(`aria-pressed="${reviewed}"`);
+      expect(button).toContain(reviewed ? "Karte wurde wahrgenommen" : "Noch nicht wahrgenommen");
+      expect(html).not.toContain("Vom Admin gelesen");
+      const pending = renderEditor(state, card, index, true);
+      expect(pending).toMatch(/<button[^>]*disabled=""[^>]*aria-label="(?:Wahrgenommen-Markierung entfernen|Karte als wahrgenommen markieren)"/);
+    }
+  });
   it("shows the card title and creator with the original date and time in the header", () => {
     const { state, card } = fixture();
     const html = renderEditor(state, card);

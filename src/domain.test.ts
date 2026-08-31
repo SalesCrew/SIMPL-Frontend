@@ -216,22 +216,23 @@ describe("Shared board behavior", () => {
     ]);
     expect(movePosition(s, "c1", "obi")).toBe(1024);
   });
-  it("only permits admins to change read receipts", () => {
+  it.each([0, 2])("lets every role toggle acknowledgements (profile=%s)", (index) => {
     const s = createSeed();
-    expect(() =>
-      applyDemoAction(s, s.profiles[2], {
-        type: "card.review",
-        id: "c1",
-        reviewed: false,
-      }),
-    ).toThrow("Administrator");
-    const next = applyDemoAction(s, s.profiles[0], {
+    const next = applyDemoAction(s, s.profiles[index], {
       type: "card.review",
       id: "c2",
       reviewed: true,
     });
-    expect(next.cards[1].reviewed_by).toBe("kilian");
+    expect(next.cards[1].reviewed_by).toBe(s.profiles[index].id);
+    expect(next.cards[1].reviewed_at).toBeTruthy();
     expect(next.cards[1].completed_at).toBeNull();
+    const cleared = applyDemoAction(next, s.profiles[2], {
+      type: "card.review",
+      id: "c2",
+      reviewed: false,
+    });
+    expect(cleared.cards[1].reviewed_at).toBeNull();
+    expect(cleared.cards[1].reviewed_by).toBeNull();
   });
   it("notifies creators, assignees and previous commenters once, excluding the actor", () => {
     const s = createSeed();

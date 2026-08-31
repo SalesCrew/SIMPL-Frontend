@@ -21,7 +21,7 @@ const names: Record<string, string> = {
   label_ids: "Labels",
   column_id: "Spalte",
   completed_at: "Status",
-  reviewed_at: "Gelesen",
+  reviewed_at: "Wahrgenommen",
   attachment: "Anhang",
   comment_attachment: "Nachrichtenanhang",
   comment: "Kommentar",
@@ -121,7 +121,8 @@ export function CardUndoToast({
   const display = (field: string, value: unknown): string => {
     if (field === "deleted_at") return value ? "Gelöscht" : "Vorhanden";
     if (field === "completed_at") return value ? "Fertig" : "Offen";
-    if (field === "reviewed_at") return value ? "Gelesen" : "Nicht gelesen";
+    if (field === "reviewed_at")
+      return value ? "Wahrgenommen" : "Nicht wahrgenommen";
     if (value === null || value === undefined || value === "") return "—";
     if (field === "column_id")
       return state.columns.find((c) => c.id === value)?.name || "Spalte";

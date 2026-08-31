@@ -91,6 +91,20 @@ describe("Workspace confidentiality", () => {
       ).toThrow();
     expect(() =>
       applyDemoAction(s, b, {
+        type: "card.review",
+        id: s.cards[0].id,
+        reviewed: true,
+      }),
+    ).toThrow("Kein Zugriff");
+    expect(() =>
+      applyDemoAction(s, { ...s.profiles[2], active: false }, {
+        type: "card.review",
+        id: s.cards[0].id,
+        reviewed: true,
+      }),
+    ).toThrow("deaktiviert");
+    expect(() =>
+      applyDemoAction(s, b, {
         type: "workspace.save",
         workspace: s.workspaces[0],
       }),

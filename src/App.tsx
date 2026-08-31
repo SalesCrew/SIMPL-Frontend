@@ -857,12 +857,12 @@ export default function App() {
                                 },
                                 {
                                   value: "unread",
-                                  label: "Noch nicht gelesen",
+                                  label: "Noch nicht wahrgenommen",
                                   icon: <Bell size={14} />,
                                 },
                                 {
                                   value: "read",
-                                  label: "Gelesen",
+                                  label: "Wahrgenommen",
                                   icon: <CheckCheck size={14} />,
                                 },
                               ]}

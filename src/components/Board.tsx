@@ -67,7 +67,6 @@ export function Avatar({
 function CardFace({
   card,
   state,
-  current,
   open,
   mutate,
   busy,
@@ -186,15 +185,15 @@ function CardFace({
         <Tooltip
           content={
             card.reviewed_at
-              ? `Gelesen von ${state.profiles.find((p) => p.id === card.reviewed_by)?.name || "Admin"}`
-              : "Noch nicht vom Admin gelesen"
+              ? `Wahrgenommen von ${state.profiles.find((p) => p.id === card.reviewed_by)?.name || "einem Mitglied"}`
+              : "Noch nicht wahrgenommen"
           }
         >
           <button
             className={`read-check ${card.reviewed_at ? "is-read" : ""}`}
-            aria-label={`${card.title}: ${card.reviewed_at ? "Gelesen-Markierung entfernen" : "als gelesen markieren"}`}
+            aria-label={`${card.title}: ${card.reviewed_at ? "Wahrgenommen-Markierung entfernen" : "als wahrgenommen markieren"}`}
             aria-pressed={!!card.reviewed_at}
-            disabled={busy || current.role !== "admin"}
+            disabled={busy}
             onClick={() =>
               void mutate({
                 type: "card.review",

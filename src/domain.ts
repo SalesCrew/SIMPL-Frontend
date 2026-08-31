@@ -452,7 +452,6 @@ export function applyDemoAction(
       break;
     }
     case "card.review": {
-      admin();
       const c = card(action.id);
       c.reviewed_at = action.reviewed ? now : null;
       c.reviewed_by = action.reviewed ? actor.id : null;

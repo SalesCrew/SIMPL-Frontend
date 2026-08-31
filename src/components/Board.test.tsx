@@ -56,6 +56,32 @@ afterEach(() => {
   drag.dropAnimation = undefined;
 });
 
+it.each([0, 2])("enables card acknowledgement on the board for every role (profile=%s)", (index) => {
+  const state = createSeed();
+  for (const busy of [false, true]) {
+    const html = renderToStaticMarkup(
+      <TooltipProvider>
+        <Board
+          state={state}
+          current={state.profiles[index]}
+          visible={state.cards}
+          open={() => {}}
+          create={() => {}}
+          editColumn={() => {}}
+          mutate={async () => true}
+          busy={busy}
+        />
+      </TooltipProvider>,
+    );
+    const buttons = [...html.matchAll(/<button[^>]*class="read-check[^>]*>/g)];
+    expect(buttons).toHaveLength(state.cards.length);
+    for (const [button] of buttons) {
+      expect(button.includes('disabled=""')).toBe(busy);
+      expect(button).toMatch(/wahrgenommen|Wahrgenommen/);
+    }
+  }
+});
+
 it("removes the drag preview immediately instead of animating a duplicate back", () => {
   highlightedColumns();
   expect(drag.dropAnimation).toBeNull();
