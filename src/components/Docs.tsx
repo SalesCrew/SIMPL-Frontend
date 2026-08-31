@@ -194,10 +194,6 @@ export function DocsPage({ search = "", onSearchChange = ignoreSearch }: {
             <span><Users size={14} /> Für Mitarbeiter & Admins</span>
           </div>
         </div>
-        <div className="docs-hero-mark" aria-hidden="true">
-          <BookOpen size={34} />
-          <span>SIMPL</span>
-        </div>
       </header>
 
       <div className="docs-layout">

@@ -12,6 +12,7 @@ describe("SIMPL documentation", () => {
     expect(html).toContain("Von der Idee bis „Fertig“");
     expect(html).toContain("Sichtbarkeit wird im Workspace geregelt");
     expect(html).toContain('href="#schnellstart" class="active" aria-current="location"');
+    expect(html).not.toContain("docs-hero-mark");
   });
 
   it("documents important behavior precisely", () => {

@@ -13,9 +13,11 @@
   align-items: center;
   justify-content: space-between;
   gap: 48px;
-  background:
-    radial-gradient(circle at 86% 12%, #dfeada 0, transparent 28%),
-    linear-gradient(135deg, #f7faf4 0%, #fff 62%);
+  background-color: #fff;
+  background-image: url("/images/docs-dune-contours-v1.png");
+  background-position: right center;
+  background-repeat: no-repeat;
+  background-size: cover;
   border-bottom: 1px solid #e5ebdf;
 }
 .docs-hero-copy { max-width: 710px; }
@@ -57,22 +59,6 @@
   font-size: 10px;
   font-weight: var(--font-weight-semibold);
 }
-.docs-hero-mark {
-  width: 150px;
-  height: 150px;
-  flex: none;
-  display: grid;
-  place-content: center;
-  justify-items: center;
-  gap: 10px;
-  border: 1px solid #dbe5d4;
-  border-radius: 38px;
-  background: #ffffffc9;
-  box-shadow: 0 24px 60px #55714614;
-  color: #54744e;
-  transform: rotate(2deg);
-}
-.docs-hero-mark span { font-size: 11px; font-weight: var(--font-weight-bold); letter-spacing: .16em; }
 .docs-layout {
   width: min(1180px, calc(100% - 64px));
   margin: 0 auto;
@@ -407,8 +393,14 @@
 }
 @media (max-width: 760px) {
   .docs-page { height: calc(100dvh - 67px - 42px); }
-  .docs-hero { min-height: 260px; padding: 38px 22px; }
-  .docs-hero-mark { display: none; }
+  .docs-hero {
+    min-height: 260px;
+    padding: 38px 22px;
+    background-image:
+      linear-gradient(90deg, #fff 0%, #fffffff8 68%, #ffffff80 100%),
+      url("/images/docs-dune-contours-v1.png");
+    background-size: 100% 100%, auto 100%;
+  }
   .docs-layout { width: calc(100% - 36px); padding-top: 30px; display: block; }
   .docs-toc { position: static; margin-bottom: 38px; display: grid; grid-template-columns: repeat(2, 1fr); }
   .docs-toc b { grid-column: 1 / -1; }
