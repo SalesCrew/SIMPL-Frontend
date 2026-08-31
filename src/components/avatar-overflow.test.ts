@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { avatarOverflow, delayedAvatarClose } from "./avatar-overflow";
+import { avatarOverflow, avatarStackWidth, delayedAvatarClose } from "./avatar-overflow";
 import { createSeed } from "../seed";
 
 const profiles = (count: number) => Array.from({ length: count }, (_, i) => ({
@@ -7,6 +7,9 @@ const profiles = (count: number) => Array.from({ length: count }, (_, i) => ({
 }));
 
 describe("Avatar overflow count", () => {
+  it.each([[0, 0], [1, 33], [5, 133], [6, 158], [17, 433]])("keeps %s circle slots right-anchored at %s pixels", (slots, width) => {
+    expect(avatarStackWidth(slots)).toBe(width);
+  });
   it.each([0, 1, 5, 6])("shows all %s people without an unnecessary count circle", (count) => {
     const result = avatarOverflow(profiles(count));
     expect(result.visible).toHaveLength(count);
@@ -33,6 +36,27 @@ describe("Avatar overflow count", () => {
 
 describe("Avatar hover intent", () => {
   afterEach(() => vi.useRealTimers());
+
+  it("stays open while hovering either a circle or its name tooltip, then closes outside the whole range", () => {
+    vi.useFakeTimers();
+    const close = vi.fn();
+    let row = true, tooltip = false;
+    const intent = delayedAvatarClose(close, () => row || tooltip);
+    intent.schedule();
+    vi.advanceTimersByTime(180);
+    expect(close).not.toHaveBeenCalled();
+    row = false;
+    intent.schedule();
+    vi.advanceTimersByTime(80);
+    tooltip = true;
+    intent.cancel();
+    vi.advanceTimersByTime(400);
+    expect(close).not.toHaveBeenCalled();
+    tooltip = false;
+    intent.schedule();
+    vi.advanceTimersByTime(180);
+    expect(close).toHaveBeenCalledOnce();
+  });
 
   it("waits for the pointer to cross into the expanded circles instead of closing immediately", () => {
     vi.useFakeTimers();

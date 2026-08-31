@@ -19,15 +19,19 @@ describe("Header team avatars", () => {
     expect(html).not.toContain("avatar-more");
     expect(html).toContain('aria-label="Mitglied 6"');
   });
-  it("replaces one slot with the precise hidden count, at the left edge", () => {
+  it("keeps the precise hidden count at the far right and folds hidden circles into the same row", () => {
     const html = render(9);
-    expect(html.match(/role="img"/g)).toHaveLength(5);
+    expect(html.match(/role="img"/g)).toHaveLength(9);
+    expect(html.match(/aria-hidden="true" inert=""/g)).toHaveLength(4);
     expect(html).toContain('aria-label="4 weitere Mitglieder anzeigen"');
     expect(html).toContain('aria-expanded="false"');
-    expect(html).toContain('aria-haspopup="dialog"');
+    expect(html).not.toContain('aria-haspopup="dialog"');
+    expect(html).toContain('aria-controls=');
     expect(html).toContain('aria-hidden="true">+4</span>');
-    expect(html.indexOf('class="avatar avatar-more"')).toBeLessThan(html.indexOf('aria-label="Mitglied 1"'));
-    expect(html).not.toContain('aria-label="Mitglied 6"');
+    expect(html.indexOf('class="avatar avatar-more"')).toBeGreaterThan(html.indexOf('aria-label="Mitglied 9"'));
+    expect(html).toContain('class="team-avatar-people"');
+    expect(html).not.toContain("team-overflow-popover");
+    expect(html).not.toContain('role="dialog"');
   });
   it("does not truncate large overflow counts", () => {
     const html = render(105);

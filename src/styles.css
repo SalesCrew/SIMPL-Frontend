@@ -601,9 +601,61 @@ select {
   height: 33px;
   border-width: 3px;
 }
-.team-avatar-group { position: relative; isolation: isolate; }
-.team-avatar-group .avatar:focus-visible,
-.team-overflow-person .avatar:focus-visible {
+.team-avatar-group {
+  position: relative;
+  isolation: isolate;
+  width: var(--avatar-collapsed-width);
+  height: 33px;
+}
+.team-avatar-row {
+  position: absolute;
+  top: -6px;
+  right: 0;
+  display: flex;
+  align-items: flex-start;
+  width: max-content;
+  max-width: var(--avatar-available-width, calc(100vw - 32px));
+}
+.team-avatar-viewport {
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  --scrollbar-inset: 4px;
+}
+.team-avatar-people {
+  display: flex;
+  width: max-content;
+  padding: 6px 8px 6px 4px;
+}
+.team-avatar-person {
+  display: flex;
+  flex: 0 0 auto;
+  width: 25px;
+  height: 33px;
+}
+.team-avatar-group .avatar { margin-left: 0; }
+.team-avatar-person.is-overflow {
+  width: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateX(8px) scale(0.65);
+  transform-origin: right center;
+  transition: width 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.14s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0.28s;
+}
+.team-avatar-group[data-state="open"] .is-overflow {
+  width: 25px;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(0) scale(1);
+  transition-delay: var(--avatar-delay), var(--avatar-delay), var(--avatar-delay), 0s;
+}
+.team-avatar-group .avatar:focus-visible {
   position: relative;
   z-index: 1;
   outline: 2px solid var(--field-focus-border);
@@ -612,6 +664,7 @@ select {
 }
 .avatar-more {
   position: relative;
+  z-index: 2;
   padding: 0;
   background: #e9f0e3;
   color: #486346;
@@ -619,70 +672,10 @@ select {
 }
 .avatar-more[data-compact] { font-size: 8px; }
 .avatar-more:hover,
-.avatar-more[data-state="open"] { background: #deead5; }
-.avatar-more-count,
-.avatar-more-close {
-  display: grid;
-  place-items: center;
-  position: absolute;
-  inset: 0;
-  transition: opacity 0.14s, transform 0.2s;
-}
-.avatar-more-close { opacity: 0; transform: translateX(-3px); }
-.avatar-more[data-state="open"] .avatar-more-count { opacity: 0; transform: translateX(3px); }
-.avatar-more[data-state="open"] .avatar-more-close { opacity: 1; transform: translateX(0); }
-.team-overflow-popover {
-  z-index: 90;
-  width: max-content;
-  max-width: min(560px, var(--radix-popover-content-available-width));
-  max-height: min(240px, var(--radix-popover-content-available-height));
-  border: 1px solid #e2e9dc;
-  border-radius: 23px;
-  background: rgb(255 255 255 / 0.97);
-  box-shadow: 0 5px 20px #304f3f0f;
-  overflow: hidden;
-  transform-origin: var(--radix-popover-content-transform-origin);
-}
-.team-overflow-popover[data-state="open"] {
-  animation: team-overflow-in 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-.team-overflow-popover[data-state="closed"] {
-  pointer-events: none;
-  animation: team-overflow-out 0.12s ease-in both;
-}
-.team-overflow-list {
-  display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 4px;
-  padding: 5px;
-  max-height: inherit;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  --scrollbar-inset: 10px;
-}
-.team-overflow-person { display: flex; flex: 0 0 33px; }
-.team-overflow-person .avatar { width: 33px; height: 33px; border-width: 3px; }
-.team-overflow-popover[data-state="open"] .team-overflow-person {
-  animation: team-avatar-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-delay: var(--avatar-delay);
-}
-@keyframes team-overflow-in {
-  from { opacity: 0; clip-path: inset(-12px -24px -12px 100% round 23px); }
-  to { opacity: 1; clip-path: inset(-12px -24px -12px -24px round 23px); }
-}
-@keyframes team-overflow-out {
-  to { opacity: 0; transform: translateX(6px); }
-}
-@keyframes team-avatar-in {
-  from { opacity: 0; transform: translateX(8px); }
-  to { opacity: 1; transform: translateX(0); }
-}
+.avatar-more[aria-expanded="true"] { background: #deead5; }
+.team-avatar-group .avatar-more { margin: 6px 0 0 -8px; }
 @media (prefers-reduced-motion: reduce) {
-  .team-overflow-popover,
-  .team-overflow-person { animation: none !important; }
-  .avatar-more-count,
-  .avatar-more-close { transition: none; }
+  .team-avatar-person.is-overflow { transition: none !important; }
 }
 .main-area {
   flex: 1;

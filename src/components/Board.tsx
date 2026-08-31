@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { orderedCards, orderedColumns, type Action } from "../domain";
 import { boardCollisionDetection, boardKeyboardCoordinates } from "../board-dnd";
-import { Tooltip } from "./ui/Tooltip";
+import { Tooltip, type TooltipContentProps } from "./ui/Tooltip";
 import { cardReadLabel } from "../card-review";
 import {
   initials,
@@ -46,11 +46,13 @@ export function Avatar({
   small = false,
   tooltip = true,
   focusable = false,
+  tooltipContentProps,
 }: {
   profile?: Profile;
   small?: boolean;
   tooltip?: boolean;
   focusable?: boolean;
+  tooltipContentProps?: TooltipContentProps;
 }) {
   const avatar = (
     <span
@@ -63,7 +65,7 @@ export function Avatar({
     </span>
   );
   return tooltip ? (
-    <Tooltip content={profile?.name || "Nicht zugewiesen"}>{avatar}</Tooltip>
+    <Tooltip content={profile?.name || "Nicht zugewiesen"} contentProps={tooltipContentProps}>{avatar}</Tooltip>
   ) : (
     avatar
   );

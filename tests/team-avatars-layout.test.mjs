@@ -3,38 +3,59 @@ import { describe, expect, it } from "vitest";
 
 const styles = readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
 const component = readFileSync(new URL("../src/components/TeamAvatars.tsx", import.meta.url), "utf8");
+const tooltip = readFileSync(new URL("../src/components/ui/Tooltip.tsx", import.meta.url), "utf8");
 const rule = (selector) => {
-  const start = styles.indexOf(`${selector} {`);
-  expect(start, `Missing ${selector}`).toBeGreaterThanOrEqual(0);
+  const start = styles.indexOf(selector + " {");
+  expect(start, "Missing " + selector).toBeGreaterThanOrEqual(0);
   return styles.slice(start, styles.indexOf("}", start));
 };
 
-describe("Avatar expansion presentation", () => {
-  it("expands in a portal to the left without resizing the in-flow header stack", () => {
-    expect(component).toContain("<Popover.Portal>");
-    expect(component).toContain('side="left"');
-    expect(component).toContain("collisionBoundary=");
-    expect(component).toContain("hideWhenDetached");
-    expect(rule(".avatar-stack .avatar")).toContain("width: 33px;");
-    expect(rule(".team-avatar-group")).not.toContain("width:");
-    expect(rule(".team-overflow-popover")).toContain("var(--radix-popover-content-available-width)");
+describe("Inline avatar expansion presentation", () => {
+  it("anchors the count at the right and lets circle widths push the original avatars left", () => {
+    expect(component).not.toContain("Popover");
+    expect(component).not.toContain("Portal");
+    expect(component.indexOf("visible.map")).toBeLessThan(component.indexOf("hidden.map"));
+    expect(component.indexOf("hidden.map")).toBeLessThan(component.indexOf('className="avatar avatar-more"'));
+    expect(rule(".team-avatar-row")).toContain("position: absolute;");
+    expect(rule(".team-avatar-row")).toContain("right: 0;");
+    expect(rule(".team-avatar-group")).toContain("width: var(--avatar-collapsed-width);");
+    expect(rule(".team-avatar-person.is-overflow")).toContain("width: 0;");
+    expect(rule('.team-avatar-group[data-state="open"] .is-overflow')).toContain("width: 25px;");
   });
-  it("wraps long teams and keeps any scrolling inside rounded edges", () => {
-    expect(rule(".team-overflow-list")).toContain("flex-wrap: wrap;");
-    expect(rule(".team-overflow-list")).toContain("overflow-y: auto;");
-    expect(rule(".team-overflow-popover")).toContain("overflow: hidden;");
-    expect(rule(".team-overflow-popover")).toContain("var(--radix-popover-content-available-height)");
+  it("has no separate panel, pill, backdrop or wrapping layout", () => {
+    expect(styles).not.toContain(".team-overflow-popover");
+    expect(styles).not.toContain(".team-overflow-list");
+    for (const selector of [".team-avatar-row", ".team-avatar-viewport", ".team-avatar-people"]) {
+      expect(rule(selector)).not.toMatch(/background:|box-shadow:|border:|border-radius:|flex-wrap:/);
+    }
   });
-  it("reveals from right to left and respects reduced motion", () => {
-    expect(styles).toContain("clip-path: inset(-12px -24px -12px 100% round 23px)");
-    expect(styles).toContain("animation-delay: var(--avatar-delay)");
-    expect(styles).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*{\s*\.team-overflow-popover,\s*\.team-overflow-person\s*{ animation: none !important;/);
+  it("keeps long rows reachable without moving the count or covering the title", () => {
+    expect(rule(".team-avatar-row")).toContain("max-width: var(--avatar-available-width");
+    expect(rule(".team-avatar-viewport")).toContain("overflow-x: auto;");
+    expect(rule(".team-avatar-viewport")).toContain("min-width: 0;");
+    expect(rule(".team-avatar-row")).toContain("align-items: flex-start;");
+    expect(rule(".team-avatar-group .avatar-more")).toContain("margin: 6px 0 0 -8px;");
+    expect(component).toContain("title || heading");
+    expect(component).toContain("new ResizeObserver(measure)");
   });
-  it("supports touch activation and dismisses when the header scrolls away", () => {
+  it("animates the circles from their count anchor and makes collapsed members inert", () => {
+    expect(rule(".team-avatar-person.is-overflow")).toContain("translateX(8px) scale(0.65)");
+    expect(rule(".team-avatar-person.is-overflow")).toContain("pointer-events: none;");
+    expect(rule('.team-avatar-group[data-state="open"] .is-overflow')).toContain("transition-delay: var(--avatar-delay)");
+    expect(component).toContain("inert={collapsed || undefined}");
+    expect(component).toContain("focusable={!collapsed}");
+    expect(styles).toContain(".team-avatar-person.is-overflow { transition: none !important; }");
+  });
+  it("bridges hover to name tooltips and supports keyboard, touch and outside dismissal", () => {
+    expect(component).toContain("pointerInside.current || tooltipInside.current");
+    expect(component).toContain('onPointerEnter: () => { tooltipInside.current = true; closeDelay.cancel(); }');
+    expect(tooltip).toContain("{...contentProps}");
     expect(component).toContain('event.pointerType !== "touch"');
+    expect(component).toContain('event.key === "Escape"');
+    expect(component).toContain("focus({ preventScroll: true })");
+    expect(component).toContain('document.addEventListener("pointerdown", dismiss)');
+    expect(component).toContain('document.removeEventListener("pointerdown", dismiss)');
     expect(component).toContain('document.addEventListener("scroll", dismiss, { capture: true, passive: true })');
     expect(component).toContain('document.removeEventListener("scroll", dismiss, true)');
-    expect(component).toContain("skipFocusRestore.current = true");
-    expect(rule(".team-overflow-popover[data-state=\"closed\"]")).toContain("pointer-events: none;");
   });
 });
