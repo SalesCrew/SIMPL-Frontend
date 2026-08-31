@@ -22,6 +22,7 @@ import {
   ArrowRight,
   RefreshCw,
   ShieldCheck,
+  BookOpen,
 } from "lucide-react";
 import { useWorkspace } from "./useWorkspace";
 import { workspaceBoard } from "./domain";
@@ -48,6 +49,7 @@ import {
 import { Dialog } from "./components/ui/Dialog";
 import { Select } from "./components/ui/Select";
 import { Tooltip, TooltipProvider } from "./components/ui/Tooltip";
+import { DocsPage } from "./components/Docs";
 import { timestamp, type Column, type Profile, type Workspace } from "./types";
 
 function Login() {
@@ -153,7 +155,7 @@ function Login() {
 }
 export default function App() {
   const w = useWorkspace();
-  const [view, setView] = useState<"board" | "mine" | "done" | "team" | "archive">("board");
+  const [view, setView] = useState<"board" | "mine" | "done" | "team" | "archive" | "docs">("board");
   const [workspaceEditor, setWorkspaceEditor] = useState<{
     workspace?: Workspace;
   } | null>(null);
@@ -308,6 +310,8 @@ export default function App() {
         ? "Erledigt"
         : view === "team"
           ? "Unser Team"
+          : view === "docs"
+            ? "Docs"
           : projectFilter
             ? state.columns.find((c) => c.id === projectFilter)?.name ||
               "Taskboard"
@@ -485,6 +489,15 @@ export default function App() {
                 </div>
                 <ChevronsUpDown size={14} />
               </button>
+              <button
+                className={`nav-item sidebar-docs ${view === "docs" ? "active" : ""}`}
+                onClick={() => navigate("docs")}
+                aria-label="Docs"
+              >
+                <BookOpen />
+                Docs
+                <ArrowUpRight size={14} />
+              </button>
               <Tooltip
                 content={
                   demoMode
@@ -523,7 +536,7 @@ export default function App() {
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
-                    if (view === "team") setView("board");
+                    if (view === "team" || view === "docs") setView("board");
                   }}
                 />
                 <kbd>⌘ K</kbd>
@@ -665,6 +678,7 @@ export default function App() {
               )}
             </section>
           )}
+          {view === "docs" ? <DocsPage /> : <>
           {view === "team" && admin && boardHeading}
           {view === "team" && admin ? (
             <div className="team-page">
@@ -944,6 +958,7 @@ export default function App() {
               />}
             </BoardViewport>
           )}
+          </>}
           <footer className="board-status">
             <span>
               <span className="live-dot" />
@@ -956,7 +971,7 @@ export default function App() {
                     : "Zugriffsprüfung alle 5 Sekunden"}
             </span>
             <span>
-              {view === "archive" ? "Originale Inhalte. Jederzeit nachlesen." : "Karten verschieben. Fortschritt schaffen."}
+              {view === "archive" ? "Originale Inhalte. Jederzeit nachlesen." : view === "docs" ? "Einfach nachlesen. Direkt weiterarbeiten." : "Karten verschieben. Fortschritt schaffen."}
               <CheckCheck size={14} />
             </span>
           </footer>
