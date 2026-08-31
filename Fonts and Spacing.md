@@ -204,7 +204,10 @@ Implementation: empty `aria-hidden` spacer 10.4px high + existing 11px bottom ma
 - Tests: **156 passing**, including four typography/asset/geometry regression tests.
 - Production build: **passed** (TypeScript and Vite).
 - CSS AST comparison against the baseline: all non-typographic declarations unchanged, excluding the intentional empty eyebrow spacer.
-- Live deployment: record completion below after publishing.
+- Live release: **2026-08-31**, application commit `3c6d68f8054b8e3fef2ecde6ebc6fa6b435b3599`, Vercel production **Ready** and GitHub Vercel check **success**.
+- Public app: [SIMPL](https://simpl-salescrew.vercel.app/). Release deployment: `dpl_5spJMYuxeTxzPuSiu7FYqFHKAj8B`. The old Trello Plus address aliases the same release.
+- Production checks: HTTP 200; removed eyebrow text absent from the live bundle; empty-spacer CSS present; all **14 font assets byte-identical** to local files; the hosted CSS is **byte-identical** to the version inspected in Chrome locally. Asset: `/assets/index-CAhzGJGc.css`.
+- Verification boundary: local board/card/menu/responsive UI was visually inspected in Chrome. Chrome then blocked the final **production login** recheck because another extension popup was open. No claim is made that the new production login was visually checked; production verification used deployment status, bundle inspection and font/CSS byte equality. Login structure and text are covered by existing rendering tests. Close the popup for an optional later live visual check.
 - No backend, database, authentication, access rules or business data changed for this typography update.
 
 ## Maintenance checklist
