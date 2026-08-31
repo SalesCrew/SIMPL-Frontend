@@ -32,7 +32,7 @@ import { BoardViewport } from "./components/BoardViewport";
 import { BrandLogo } from "./components/BrandLogo";
 import { NotificationBell } from "./components/NotificationBell";
 import { InitialPassword } from "./components/InitialPassword";
-import { ArchiveList, ArchivedCard } from "./components/Archive";
+import { ArchiveHeading, ArchiveList, ArchivedCard } from "./components/Archive";
 import type { CardEditSession } from "./card-edit-session";
 import { CardUndoToast } from "./components/CardUndoToast";
 import "./card-editing.css";
@@ -300,7 +300,10 @@ export default function App() {
   const cards = state.cards.filter(
     (c) =>
       (view === "archive" ? !!c.archived_at : !c.archived_at) &&
-      (!projectFilter || c.project_id === projectFilter) &&
+      (!projectFilter ||
+        (view === "archive" && projectFilter === "unassigned"
+          ? !c.project_id
+          : c.project_id === projectFilter)) &&
       (!search ||
         `${c.title} ${c.description}`
           .toLowerCase()
@@ -763,20 +766,34 @@ export default function App() {
           ) : (
             <BoardViewport
               key={`${w.activeWorkspaceId}:${view}`}
-              heading={boardHeading}
+              heading={view === "archive" ? <ArchiveHeading /> : boardHeading}
               controls={
-                <div className="board-toolbar">
+                <div className={`board-toolbar${view === "archive" ? " archive-toolbar" : ""}`}>
                   <div className="board-tabs">
-                    <button
+                    {view === "archive" ? <div className="view-tab selected archive-view-label">
+                      <Archive size={16} />Archiv<span>{cards.length}</span>
+                    </div> : <button
                       className="view-tab selected"
                       onClick={() => navigate("board")}
                     >
                       <LayoutGrid size={16} />
                       Board<span>{cards.length}</span>
-                    </button>
+                    </button>}
                     <span className="toolbar-divider" />
                     <div className="member-select">
-                      <Select
+                      {view === "archive" ? <Select
+                        label="Archiv nach Projekt filtern"
+                        variant="toolbar"
+                        value={projectFilter}
+                        onValueChange={setProjectFilter}
+                        options={[
+                          { value: "", label: "Alle Projekte", icon: <LayoutGrid size={15} /> },
+                          ...state.columns.filter((column) => column.kind === "project").map((column) => ({
+                            value: column.id, label: column.name, icon: <i className={`dot ${column.color}`} />,
+                          })),
+                          { value: "unassigned", label: "Nicht zugeordnet", icon: <Archive size={15} /> },
+                        ]}
+                      /> : <Select
                         label="Nach Mitglied filtern"
                         variant="toolbar"
                         icon={<Users size={15} />}
@@ -798,17 +815,17 @@ export default function App() {
                               ),
                             })),
                         ]}
-                      />
+                      />}
                     </div>
                   </div>
                   <div className="toolbar-actions">
-                    <button
+                    {view !== "archive" && <button
                       className="secondary label-manage"
                       onClick={() => setShowLabels(true)}
                     >
                       <Tag size={14} />
                       Labels
-                    </button>
+                    </button>}
                     <PopoverPrimitive.Root
                       open={showFilters}
                       onOpenChange={setShowFilters}
@@ -827,12 +844,12 @@ export default function App() {
                           sideOffset={9}
                           align="end"
                           collisionPadding={12}
-                          aria-label="Board filtern"
+                          aria-label={view === "archive" ? "Archiv filtern" : "Board filtern"}
                         >
                           <header className="filter-heading">
                             <span>
                               <SlidersHorizontal size={15} />
-                              Board filtern
+                              {view === "archive" ? "Archiv filtern" : "Board filtern"}
                             </span>
                             <PopoverPrimitive.Close
                               className="icon-button"
@@ -841,6 +858,15 @@ export default function App() {
                               <X size={15} />
                             </PopoverPrimitive.Close>
                           </header>
+                          {view === "archive" && <label className="field">
+                            Zugewiesen an
+                            <Select label="Archiv nach Mitglied filtern" variant="filter" value={memberFilter} onValueChange={setMemberFilter}
+                              options={[
+                                { value: "", label: "Alle Mitglieder", icon: <Users size={15} /> },
+                                ...state.profiles.map((profile) => ({ value: profile.id, label: profile.name, icon: <Avatar profile={profile} small tooltip={false} /> })),
+                              ]}
+                            />
+                          </label>}
                           <label className="field">
                             Label
                             <Select
@@ -917,7 +943,7 @@ export default function App() {
                         </PopoverPrimitive.Content>
                       </PopoverPrimitive.Portal>
                     </PopoverPrimitive.Root>
-                    <button
+                    {view !== "archive" && <button
                       className="primary"
                       onClick={() =>
                         setCardEditor({ column: projectFilter || undefined })
@@ -928,18 +954,18 @@ export default function App() {
                     >
                       <Plus size={17} />
                       Neue Karte
-                    </button>
+                    </button>}
                   </div>
                 </div>
               }
             >
-              {filtersActive && cards.length === 0 && (
+              {view !== "archive" && filtersActive && cards.length === 0 && (
                 <div className="no-results">
                   <Search size={17} />
                   Keine Karten gefunden. Passe die Suche oder deine Filter an.
                 </div>
               )}
-              {view === "archive" ? <ArchiveList cards={cards} state={state} open={openCard} /> : <Board
+              {view === "archive" ? <ArchiveList cards={cards} state={state} open={openCard} filtered={filtersActive} reset={resetFilters} /> : <Board
                 {...{ state, current, mutate, busy }}
                 visible={cards}
                 open={openCard}
@@ -963,7 +989,7 @@ export default function App() {
                     : "Zugriffsprüfung alle 5 Sekunden"}
             </span>
             <span>
-              Karten verschieben. Fortschritt schaffen.
+              {view === "archive" ? "Originale Inhalte. Jederzeit nachlesen." : "Karten verschieben. Fortschritt schaffen."}
               <CheckCheck size={14} />
             </span>
           </footer>
