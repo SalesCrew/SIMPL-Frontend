@@ -1,6 +1,6 @@
 # SIMPL Frontend
 
-React + TypeScript taskboard. Production: https://simpl-salescrew.vercel.app, hosted by Vercel project `sales-crew/simpl`. GitHub `main` automatically deploys the latest version.
+React + TypeScript taskboard. Production: https://get-simpl.vercel.app, hosted by Vercel project `sales-crew/simpl`. GitHub `main` automatically deploys the latest version.
 
 ## Development
 
