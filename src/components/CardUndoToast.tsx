@@ -5,7 +5,6 @@ import {
   LoaderCircle,
   RotateCcw,
   X,
-  ArrowRight,
 } from "lucide-react";
 import {
   errorMessage,
@@ -28,6 +27,22 @@ const names: Record<string, string> = {
   comment: "Kommentar",
   deleted_at: "Karte",
 };
+
+export function CardChangeDiff({ before, after }: { before: string; after: string }) {
+  return (
+    <div className="undo-diff">
+      <div className="undo-diff-line is-before" role="group" aria-label="Vorher">
+        <span className="undo-diff-marker" aria-hidden="true">−</span>
+        <span className="undo-diff-value">{before}</span>
+      </div>
+      <div className="undo-diff-line is-after" role="group" aria-label="Nachher">
+        <span className="undo-diff-marker" aria-hidden="true">+</span>
+        <span className="undo-diff-value">{after}</span>
+      </div>
+    </div>
+  );
+}
+
 export function CardUndoToast({
   offer,
   state,
@@ -232,11 +247,10 @@ export function CardUndoToast({
               {offer.events.map((event, index) => (
                 <li key={index}>
                   <b>{names[event.field] || event.field}</b>
-                  <div className="undo-diff">
-                    <span>{display(event.field, event.before)}</span>
-                    <ArrowRight size={12} />
-                    <span>{display(event.field, event.after)}</span>
-                  </div>
+                  <CardChangeDiff
+                    before={display(event.field, event.before)}
+                    after={display(event.field, event.after)}
+                  />
                 </li>
               ))}
             </ol>

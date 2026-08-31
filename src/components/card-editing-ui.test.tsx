@@ -1,10 +1,25 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { CardTextField } from "./ui/CardTextField";
-import { CardUndoToast } from "./CardUndoToast";
+import { CardChangeDiff, CardUndoToast } from "./CardUndoToast";
 import { createSeed } from "../seed";
 
 describe("card editing controls", () => {
+  it("distinguishes previous and current values with accessible diff lines", () => {
+    const html = renderToStaticMarkup(<CardChangeDiff before="Vorhanden" after="Gelöscht" />);
+    expect(html).toContain('class="undo-diff-line is-before" role="group" aria-label="Vorher"');
+    expect(html).toContain('class="undo-diff-line is-after" role="group" aria-label="Nachher"');
+    expect(html).toContain('aria-hidden="true">−</span>');
+    expect(html).toContain('aria-hidden="true">+</span>');
+    expect(html.indexOf("Vorhanden")).toBeLessThan(html.indexOf("Gelöscht"));
+    expect(html).not.toContain("<svg");
+  });
+  it("preserves multiline text and empty placeholders while escaping user content", () => {
+    const html = renderToStaticMarkup(<CardChangeDiff before="—" after={'Zeile 1\n<script>alert(1)</script>'} />);
+    expect(html).toContain('class="undo-diff-value">—</span>');
+    expect(html).toContain("Zeile 1\n&lt;script&gt;alert(1)&lt;/script&gt;");
+    expect(html).not.toContain("<script>");
+  });
   it("shows no save control before a text field changes", () => {
     const html = renderToStaticMarkup(
       <CardTextField
