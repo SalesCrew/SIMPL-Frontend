@@ -47,14 +47,21 @@ export async function attachmentBlob(item: Attachment): Promise<Blob> {
       );
     return blob;
   }
-  const { data, error } = await supabase!.storage
-    .from(bucket)
-    .download(item.object_path);
-  if (error || !data)
+  const session = (await supabase!.auth.getSession()).data.session;
+  if (!session) throw new Error("Bitte erneut anmelden.");
+  const response = await fetch(
+    `${import.meta.env.VITE_API_URL || ""}/api/attachments/${encodeURIComponent(item.id)}/download`,
+    {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(15 * 60 * 1000),
+    },
+  );
+  if (!response.ok)
     throw new Error(
       "Datei nicht verfügbar. Bitte Anmeldung und Verbindung prüfen.",
     );
-  return data;
+  return response.blob();
 }
 function uploadBytes(
   item: Attachment,
