@@ -30,6 +30,7 @@ import { demoMode, supabase } from "./data";
 import { Board, Avatar } from "./components/Board";
 import { BoardViewport } from "./components/BoardViewport";
 import { BrandLogo } from "./components/BrandLogo";
+import { TeamAvatars } from "./components/TeamAvatars";
 import { NotificationBell } from "./components/NotificationBell";
 import { InitialPassword } from "./components/InitialPassword";
 import { ArchiveHeading, ArchiveList, ArchivedCard } from "./components/Archive";
@@ -396,14 +397,7 @@ export default function App() {
         </p>
       </div>
       <div className="heading-right">
-        <div className="avatar-stack">
-          {state.profiles
-            .filter((p) => p.active)
-            .slice(0, 6)
-            .map((p) => (
-              <Avatar profile={p} key={p.id} />
-            ))}
-        </div>
+        <TeamAvatars key={w.activeWorkspaceId} profiles={state.profiles} />
         <span className="team-copy">Ein Board. Ein Team.</span>
       </div>
     </section>

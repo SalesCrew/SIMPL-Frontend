@@ -45,16 +45,19 @@ export function Avatar({
   profile,
   small = false,
   tooltip = true,
+  focusable = false,
 }: {
   profile?: Profile;
   small?: boolean;
   tooltip?: boolean;
+  focusable?: boolean;
 }) {
   const avatar = (
     <span
       className={`avatar ${small ? "small" : ""} ${profile?.color || "slate"}`}
       role="img"
       aria-label={profile?.name || "Nicht zugewiesen"}
+      tabIndex={focusable ? 0 : undefined}
     >
       {profile ? initials(profile.name) : "–"}
     </span>

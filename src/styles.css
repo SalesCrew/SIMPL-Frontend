@@ -601,6 +601,89 @@ select {
   height: 33px;
   border-width: 3px;
 }
+.team-avatar-group { position: relative; isolation: isolate; }
+.team-avatar-group .avatar:focus-visible,
+.team-overflow-person .avatar:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 2px solid var(--field-focus-border);
+  outline-offset: 2px;
+  box-shadow: var(--field-focus-shadow);
+}
+.avatar-more {
+  position: relative;
+  padding: 0;
+  background: #e9f0e3;
+  color: #486346;
+  font-variant-numeric: tabular-nums;
+}
+.avatar-more[data-compact] { font-size: 8px; }
+.avatar-more:hover,
+.avatar-more[data-state="open"] { background: #deead5; }
+.avatar-more-count,
+.avatar-more-close {
+  display: grid;
+  place-items: center;
+  position: absolute;
+  inset: 0;
+  transition: opacity 0.14s, transform 0.2s;
+}
+.avatar-more-close { opacity: 0; transform: translateX(-3px); }
+.avatar-more[data-state="open"] .avatar-more-count { opacity: 0; transform: translateX(3px); }
+.avatar-more[data-state="open"] .avatar-more-close { opacity: 1; transform: translateX(0); }
+.team-overflow-popover {
+  z-index: 90;
+  width: max-content;
+  max-width: min(560px, var(--radix-popover-content-available-width));
+  max-height: min(240px, var(--radix-popover-content-available-height));
+  border: 1px solid #e2e9dc;
+  border-radius: 23px;
+  background: rgb(255 255 255 / 0.97);
+  box-shadow: 0 5px 20px #304f3f0f;
+  overflow: hidden;
+  transform-origin: var(--radix-popover-content-transform-origin);
+}
+.team-overflow-popover[data-state="open"] {
+  animation: team-overflow-in 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.team-overflow-popover[data-state="closed"] {
+  pointer-events: none;
+  animation: team-overflow-out 0.12s ease-in both;
+}
+.team-overflow-list {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 5px;
+  max-height: inherit;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  --scrollbar-inset: 10px;
+}
+.team-overflow-person { display: flex; flex: 0 0 33px; }
+.team-overflow-person .avatar { width: 33px; height: 33px; border-width: 3px; }
+.team-overflow-popover[data-state="open"] .team-overflow-person {
+  animation: team-avatar-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--avatar-delay);
+}
+@keyframes team-overflow-in {
+  from { opacity: 0; clip-path: inset(-12px -24px -12px 100% round 23px); }
+  to { opacity: 1; clip-path: inset(-12px -24px -12px -24px round 23px); }
+}
+@keyframes team-overflow-out {
+  to { opacity: 0; transform: translateX(6px); }
+}
+@keyframes team-avatar-in {
+  from { opacity: 0; transform: translateX(8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .team-overflow-popover,
+  .team-overflow-person { animation: none !important; }
+  .avatar-more-count,
+  .avatar-more-close { transition: none; }
+}
 .main-area {
   flex: 1;
   min-width: 0;
