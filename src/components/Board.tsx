@@ -45,12 +45,14 @@ export function Avatar({
   profile,
   small = false,
   tooltip = true,
+  tooltipLabel,
   focusable = false,
   tooltipContentProps,
 }: {
   profile?: Profile;
   small?: boolean;
   tooltip?: boolean;
+  tooltipLabel?: string;
   focusable?: boolean;
   tooltipContentProps?: TooltipContentProps;
 }) {
@@ -65,7 +67,7 @@ export function Avatar({
     </span>
   );
   return tooltip ? (
-    <Tooltip content={profile?.name || "Nicht zugewiesen"} contentProps={tooltipContentProps}>{avatar}</Tooltip>
+    <Tooltip content={tooltipLabel || profile?.name || "Nicht zugewiesen"} contentProps={tooltipContentProps}>{avatar}</Tooltip>
   ) : (
     avatar
   );
@@ -105,6 +107,7 @@ function CardFace({
   const attachments = state.attachments.filter(
     (a) => a.card_id === card.id && a.status === "ready",
   ).length;
+  const creator = state.profiles.find((p) => p.id === card.created_by);
   const startCardDrag = (event: SyntheticEvent<HTMLElement>) => {
     const target = event.target;
     // Title clicks still open the card; dragging them moves it. Action buttons
@@ -222,7 +225,8 @@ function CardFace({
           )}
         </span>
         <Avatar
-          profile={state.profiles.find((p) => p.id === card.assignee_id)}
+          profile={creator}
+          tooltipLabel={`Erstellt von ${creator?.name || "unbekanntem Mitglied"}`}
           small
         />
       </div>

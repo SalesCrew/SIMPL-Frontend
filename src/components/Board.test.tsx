@@ -102,6 +102,20 @@ it("keeps the board interactive while only preventing a conflicting second drag 
   expect(html).not.toContain('aria-busy="true"');
 });
 
+it("shows the card creator in the bottom-right avatar, independently of the assignee", () => {
+  const state = createSeed();
+  state.cards[0] = {
+    ...state.cards[0],
+    created_by: "anna",
+    assignee_id: "david",
+  };
+  const html = renderToStaticMarkup(<TooltipProvider><Board state={state} current={state.profiles[0]}
+    visible={[state.cards[0]]} open={() => {}} create={() => {}} editColumn={() => {}} mutate={async () => true}
+    busy={false} /></TooltipProvider>);
+  expect(html).toContain('aria-label="Anna Leitner"');
+  expect(html).not.toContain('aria-label="David Lang"');
+});
+
 describe("Board column drag highlight", () => {
   it("does not highlight any column when nothing is being dragged", () => {
     expect(highlightedColumns()).toEqual([]);

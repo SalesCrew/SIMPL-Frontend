@@ -55,7 +55,7 @@ describe("returning completed cards", () => {
     f.complete("b", true);
     f.complete("b", false);
     expect(f.order("rover")).toEqual(["a", "b", "c"]);
-    expect(f.state().cards.find((c) => c.id === "b")?.project_id).toBe("spark");
+    expect(f.state().cards.find((c) => c.id === "b")?.project_id).toBe("rover");
   });
   it("uses neighboring cards after positions are changed or rebalanced", () => {
     const f = fixture();

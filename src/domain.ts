@@ -448,6 +448,7 @@ export function applyDemoAction(
       }
       c.position = movePosition(s, c.id, target.id, action.before_id);
       c.column_id = target.id;
+      if (target.kind === "project") c.project_id = target.id;
       c.completed_at = target.kind === "done" ? c.completed_at || now : null;
       c.updated_at = now;
       break;

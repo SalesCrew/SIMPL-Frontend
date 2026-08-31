@@ -66,7 +66,7 @@ export interface Card {
   title: string;
   description: string;
   column_id: string;
-  project_id: string | null; // Null only for imported archives with no single original project.
+  project_id: string | null; // Current real project; status buckets preserve it. Null only for ambiguous imported archives.
   return_column_id?: string | null;
   return_before_id?: string | null;
   return_after_id?: string | null;

@@ -24,7 +24,7 @@ describe("Shared board behavior", () => {
       });
       expect(done.cards[0]).toMatchObject({
         column_id: "done",
-        project_id: "spark",
+        project_id: origin === "work" ? "spark" : origin,
         reviewed_at: s.cards[0].reviewed_at,
       });
       expect(done.cards[0].completed_at).toBeTruthy();
@@ -41,7 +41,7 @@ describe("Shared board behavior", () => {
       });
       expect(reopened.cards[0]).toMatchObject({
         column_id: origin === "work" ? "spark" : origin,
-        project_id: "spark",
+        project_id: origin === "work" ? "spark" : origin,
         completed_at: null,
       });
     },
@@ -184,7 +184,7 @@ describe("Shared board behavior", () => {
     });
     expect(s.cards).toHaveLength(13);
   });
-  it("retains original project when moved and synchronizes completion with the done column", () => {
+  it("updates the project on real-project moves and preserves it in status buckets", () => {
     const s = createSeed();
     const done = applyDemoAction(s, s.profiles[2], {
       type: "card.move",
@@ -193,12 +193,16 @@ describe("Shared board behavior", () => {
     });
     expect(done.cards[0].completed_at).toBeTruthy();
     expect(done.cards[0].project_id).toBe("spark");
-    const reopened = applyDemoAction(done, s.profiles[2], {
+    const movedProject = applyDemoAction(done, s.profiles[2], {
       type: "card.move",
       id: "c1",
-      column_id: "spark",
+      column_id: "rover",
     });
-    expect(reopened.cards[0].completed_at).toBeNull();
+    expect(movedProject.cards[0]).toMatchObject({
+      column_id: "rover",
+      project_id: "rover",
+      completed_at: null,
+    });
   });
   it("orders cards before the selected target and at the end of empty columns", () => {
     const s = createSeed();

@@ -17,7 +17,7 @@ describe("optimistic card movement", () => {
     const visible = projectCardMoves(state, actor, [move]);
     expect(orderedCards(visible, "rover").map((c) => c.id)).toEqual(["c5", "c1", "c6", "c7"]);
     expect(state.cards.find((c) => c.id === "c1")?.column_id).toBe("spark");
-    expect(visible.cards.find((c) => c.id === "c1")).toMatchObject({ project_id: "spark", updated_at: move.startedAt });
+    expect(visible.cards.find((c) => c.id === "c1")).toMatchObject({ project_id: "rover", updated_at: move.startedAt });
   });
   it("keeps a pending drop in place through polling and preserves newly received comments and edits", () => {
     const { state, actor, move } = fixture();
