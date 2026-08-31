@@ -982,7 +982,6 @@ export default function App() {
             card={editedCard}
             initialColumn={cardEditor.column}
             session={cardEditor.session}
-            created={openCard}
             close={() => {
               cardEditor.session?.close();
               setCardEditor(null);

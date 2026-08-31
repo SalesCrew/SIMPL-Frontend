@@ -81,10 +81,8 @@ export function CardEditor({
   initialColumn,
   editLabels,
   workspaceId,
-  created,
   session,
 }: EditorProps & {
-  created: (id: string) => void;
   workspaceId: string;
   card?: Card;
   initialColumn?: string;
@@ -149,7 +147,7 @@ export function CardEditor({
       assignee_id: assignee || null,
       label_ids: labels,
     });
-    if (ok) created(newId);
+    if (ok) close();
   }
   return (
     <Dialog

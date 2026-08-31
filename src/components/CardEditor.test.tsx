@@ -44,7 +44,6 @@ function renderEditor(state: BoardState, card?: Card, profileIndex = 0, busy = f
         mutate={async () => true}
         close={() => {}}
         editLabels={() => {}}
-        created={() => {}}
       />
     </TooltipProvider>,
   );
