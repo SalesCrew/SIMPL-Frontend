@@ -30,6 +30,7 @@ import { Board, Avatar } from "./components/Board";
 import { BoardViewport } from "./components/BoardViewport";
 import { BrandLogo } from "./components/BrandLogo";
 import { NotificationBell } from "./components/NotificationBell";
+import { InitialPassword } from "./components/InitialPassword";
 import type { CardEditSession } from "./card-edit-session";
 import { CardUndoToast } from "./components/CardUndoToast";
 import "./card-editing.css";
@@ -234,6 +235,29 @@ export default function App() {
       </main>
     );
   if (!demoMode && !w.user) return <Login />;
+  if (!demoMode && w.passwordGate === "checking")
+    return (
+      <main className="password-gate">
+        <div className="password-gate-form" role="status">
+          <p>Dein Zugang wird geprüft …</p>
+          {w.error && <>
+            <p role="alert">{w.error}</p>
+            <button className="primary" onClick={() => void w.refresh()}>Erneut versuchen</button>
+          </>}
+        </div>
+      </main>
+    );
+  if (!demoMode && w.passwordGate === "required")
+    return <InitialPassword email={w.user!.email || ""} complete={w.refresh} />;
+  if (!demoMode && (w.passwordGate === "reauthenticate" || w.passwordGate === "unavailable"))
+    return (
+      <main className="password-gate">
+        <div className="password-gate-form">
+          <h1>{w.passwordGate === "reauthenticate" ? "Bitte erneut anmelden." : "Zugang noch nicht freigeschaltet."}</h1>
+          <button className="primary" onClick={() => void supabase?.auth.signOut({ scope: "local" })}>Zur Anmeldung</button>
+        </div>
+      </main>
+    );
   if (!w.state)
     return (
       <main className="setup">

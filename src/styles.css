@@ -1900,6 +1900,29 @@ textarea {
 .form-footer > .icon-button {
   margin-left: auto;
 }
+.password-gate {
+  min-height: 100dvh;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  padding: 32px 20px;
+  background: #fff;
+}
+.password-gate-form {
+  width: min(100%, 380px);
+  display: grid;
+  gap: 20px;
+}
+.password-gate-form h1 {
+  margin: 0 0 8px;
+  font-size: 24px;
+  line-height: 1.25;
+}
+.password-gate-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
 .detail-status {
   display: flex;
   flex-wrap: wrap;

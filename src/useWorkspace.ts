@@ -7,7 +7,7 @@ import {
   visibleBoardForActor,
   type Action,
 } from "./domain";
-import { apiRequest, demoMode, loadBoard, runRemote, supabase } from "./data";
+import { accountAccess, apiRequest, demoMode, loadBoard, runRemote, supabase } from "./data";
 import { createSeed } from "./seed";
 import type { BoardState } from "./types";
 import { removeLocalBlob } from "./attachments";
@@ -42,6 +42,7 @@ export function useWorkspace() {
     workspaceId: string;
   } | null>(null);
   const [authReady, setAuthReady] = useState(demoMode || !supabase);
+  const [passwordGate, setPasswordGate] = useState<"checking" | "required" | "ready" | "reauthenticate" | "unavailable">(demoMode ? "ready" : "checking");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [connected, setConnected] = useState(false);
@@ -78,6 +79,17 @@ export function useWorkspace() {
   const refresh = useCallback(async () => {
     const version = ++requestVersion.current;
     try {
+      const access = await accountAccess();
+      if (version !== requestVersion.current) return;
+      const gate = access.ready ? "ready" : !access.security ? "unavailable"
+        : access.security.password_change_required ? "required" : "reauthenticate";
+      setPasswordGate(gate);
+      if (!access.ready) {
+        stateRef.current = null;
+        setState(null);
+        setError("");
+        return;
+      }
       const next = await loadBoard((revision) => {
         if (version !== requestVersion.current) return;
         const previous = stateRef.current?.access_revision;
@@ -97,6 +109,7 @@ export function useWorkspace() {
       }
     } catch {
       if (version === requestVersion.current) {
+        setPasswordGate("checking");
         stateRef.current = null;
         setState(null);
         setError(
@@ -115,6 +128,7 @@ export function useWorkspace() {
         stateRef.current = null;
         setState(null);
         setSelection(null);
+        setPasswordGate("checking");
       }
       setUser(next);
       setAuthReady(true);
@@ -142,6 +156,9 @@ export function useWorkspace() {
   useEffect(() => {
     if (!user || demoMode || !supabase) return;
     void refresh();
+  }, [user?.id, refresh]);
+  useEffect(() => {
+    if (!user || demoMode || !supabase || passwordGate !== "ready") return;
     let timer: ReturnType<typeof setTimeout>;
     let active = true;
     const channel = supabase
@@ -205,7 +222,7 @@ export function useWorkspace() {
       void supabase!.removeChannel(channel);
       setConnected(false);
     };
-  }, [user?.id, refresh]);
+  }, [user?.id, refresh, passwordGate]);
   useEffect(() => {
     if (!demoMode) return;
     const sync = (event: StorageEvent) => {
@@ -344,6 +361,7 @@ export function useWorkspace() {
     current,
     user,
     authReady,
+    passwordGate,
     error,
     setError,
     busy,

@@ -60,6 +60,29 @@ export async function accessContext(): Promise<{
   if (error) throw error;
   return data;
 }
+export type AccountAccess = {
+  security: {
+    user_id: string;
+    password_change_required: boolean;
+    password_changed_at: string | null;
+  } | null;
+  ready: boolean;
+};
+export async function accountAccess(): Promise<AccountAccess> {
+  const { data, error } = await supabase!.rpc("account_access_context");
+  if (error) throw error;
+  if (!data || typeof data.ready !== "boolean")
+    throw new Error("Der Kontozugriff konnte nicht geprüft werden.");
+  return data;
+}
+export async function changeInitialPassword(email: string, password: string, repeatPassword: string) {
+  await apiRequest("/account/initial-password", "POST", { password, repeatPassword });
+  const { error } = await supabase!.auth.signInWithPassword({ email, password });
+  if (error) {
+    await supabase!.auth.signOut({ scope: "local" });
+    throw new Error("Passwort gespeichert. Bitte melde dich mit deinem neuen Passwort erneut an.");
+  }
+}
 export async function loadBoard(
   onContext?: (revision: AccessRevision | null) => void,
 ): Promise<BoardState> {
