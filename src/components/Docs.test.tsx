@@ -13,20 +13,22 @@ describe("SIMPL documentation", () => {
     expect(html).toContain("Sichtbarkeit wird im Workspace geregelt");
   });
 
-  it("documents important behavior precisely instead of promising unavailable features", () => {
+  it("documents important behavior precisely", () => {
     expect(html).toContain("500 MB pro Datei");
     expect(html).toContain("Enter sendet");
-    expect(html).toContain("Aktuell nicht");
+    expect(html).toContain("Checklisten direkt mitplanen");
+    expect(html).toContain("Aus Beschreibung");
     expect(html).toContain("Er zeigt die Person, die die Karte erstellt hat");
     expect(html).toContain("an ihre zuletzt gemerkte Position");
     expect(html).toContain("schreibgeschützt");
   });
 
   it("provides a broad accessible Q&A", () => {
-    expect(html.match(/<details>/g)).toHaveLength(28);
-    expect(html.match(/<summary>/g)).toHaveLength(28);
+    expect(html.match(/<details>/g)).toHaveLength(29);
+    expect(html.match(/<summary>/g)).toHaveLength(29);
     expect(html).toContain("Wie melde ich mich an?");
     expect(html).toContain("Wie filtere ich nach einer Person?");
+    expect(html).toContain("Wie erstelle ich eine Checkliste aus der Beschreibung?");
     expect(html).toContain("Was mache ich, wenn etwas fehlt oder nicht lädt?");
   });
 });

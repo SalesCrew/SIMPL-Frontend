@@ -184,6 +184,23 @@ describe("Shared board behavior", () => {
     });
     expect(s.cards).toHaveLength(13);
   });
+  it("persists checklists on newly created cards", () => {
+    const s = createSeed();
+    const checklists = [{
+      id: "launch",
+      name: "Launch",
+      items: [{ id: "approve", name: "Freigabe holen", completed: false }],
+    }];
+    const next = applyDemoAction(s, s.profiles[0], {
+      type: "card.create",
+      title: "Mit Checkliste",
+      column_id: "spark",
+      project_id: "spark",
+      checklists,
+    });
+    expect(next.cards.at(-1)?.checklists).toEqual(checklists);
+    expect(s.cards).toHaveLength(13);
+  });
   it("updates the project on real-project moves and preserves it in status buckets", () => {
     const s = createSeed();
     const done = applyDemoAction(s, s.profiles[2], {

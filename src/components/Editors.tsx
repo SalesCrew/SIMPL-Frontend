@@ -20,6 +20,11 @@ import { useCommentViewport } from "./useCommentViewport";
 import { CommentComposer } from "./CommentComposer";
 import { CommentAttachments } from "./CommentAttachments";
 import { Checklists } from "./Checklists";
+import { ChecklistBuilder } from "./ChecklistBuilder";
+import {
+  checklistFromDescription,
+  checklistsForNewCard,
+} from "../checklist-drafts";
 import {
   colors,
   colorNames,
@@ -108,6 +113,7 @@ export function CardEditor({
     card ? card.assignee_id || "" : current.id,
   );
   const [labels, setLabels] = useState(card?.label_ids || []);
+  const [draftChecklists, setDraftChecklists] = useState<NonNullable<Card["checklists"]>>([]);
   const [sendingComment, setSendingComment] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const priorText = useRef({
@@ -146,6 +152,7 @@ export function CardEditor({
       project_id: columnId,
       assignee_id: assignee || null,
       label_ids: labels,
+      checklists: checklistsForNewCard(description, draftChecklists),
     });
     if (ok) close();
   }
@@ -326,6 +333,14 @@ export function CardEditor({
                 : undefined
             }
           />
+          {!card && (
+            <ChecklistBuilder
+              value={draftChecklists}
+              automatic={checklistFromDescription(description)}
+              disabled={busy || uploading}
+              onChange={setDraftChecklists}
+            />
+          )}
           {card?.due_at && <p className="form-hint">Fällig · <time dateTime={card.due_at}>{timestamp(card.due_at)}</time></p>}
           {card?.checklists?.length ? <Checklists lists={card.checklists} disabled={busy}
             save={(checklists) => mutate({ type: "card.update", id: card.id, patch: { checklists } })} /> : null}

@@ -173,6 +173,7 @@ export async function runRemote(action: Action) {
         project_id: action.project_id,
         assignee_id: action.assignee_id,
         label_ids: action.label_ids || [],
+        checklists: action.checklists || [],
       });
       break;
     case "card.update":

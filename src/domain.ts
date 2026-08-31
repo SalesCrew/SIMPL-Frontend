@@ -20,6 +20,7 @@ export type Action =
       description?: string;
       assignee_id?: string | null;
       label_ids?: string[];
+      checklists?: Card["checklists"];
     }
   | {
       type: "card.update";
@@ -389,6 +390,7 @@ export function applyDemoAction(
         assignee_id:
           action.assignee_id === undefined ? actor.id : action.assignee_id,
         label_ids: action.label_ids || [],
+        checklists: action.checklists || [],
         position: movePosition(s, "", action.column_id),
         completed_at:
           s.columns.find((c) => c.id === action.column_id)?.kind === "done"
