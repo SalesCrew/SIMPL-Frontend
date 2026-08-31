@@ -1980,6 +1980,85 @@ textarea {
 .form-footer > .icon-button {
   margin-left: auto;
 }
+.access-loading {
+  min-height: 100dvh;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  padding: 40px 24px;
+  background: #fff;
+}
+.access-loading-content {
+  width: min(100%, 360px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: access-loading-enter 0.25s ease-out both;
+}
+.access-loading-brand {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #263d31;
+  font-size: 28px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+}
+.access-loading-track {
+  width: 112px;
+  height: 3px;
+  margin-top: 28px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #edf2e9;
+}
+.access-loading-track > span {
+  display: block;
+  width: 40%;
+  height: 100%;
+  border-radius: inherit;
+  background: #8fa880;
+  animation: access-loading-sweep 1.7s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+.access-loading-status { margin-top: 18px; }
+.access-loading-status h1 {
+  margin: 0;
+  color: #68755f;
+  font-size: 13px;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.65;
+  letter-spacing: normal;
+}
+.access-loading-recovery {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  margin-top: 10px;
+}
+.access-loading-recovery p {
+  margin: 0;
+  color: #68755f;
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.access-loading[data-state="error"] .access-loading-track { visibility: hidden; }
+.access-loading[data-state="error"] .access-loading-track > span { animation: none; }
+@keyframes access-loading-sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+@keyframes access-loading-enter {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .access-loading-content,
+  .access-loading-track > span { animation: none; }
+  .access-loading-track > span { transform: translateX(75%); }
+}
 .password-gate {
   min-height: 100dvh;
   width: 100%;

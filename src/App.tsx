@@ -33,6 +33,7 @@ import { BrandLogo } from "./components/BrandLogo";
 import { TeamAvatars } from "./components/TeamAvatars";
 import { NotificationBell } from "./components/NotificationBell";
 import { InitialPassword } from "./components/InitialPassword";
+import { AccessLoading } from "./components/AccessLoading";
 import { ArchiveHeading, ArchiveList, ArchivedCard } from "./components/Archive";
 import type { CardEditSession } from "./card-edit-session";
 import { CardUndoToast } from "./components/CardUndoToast";
@@ -232,24 +233,10 @@ export default function App() {
       </main>
     );
   if (!w.authReady)
-    return (
-      <main className="setup">
-        <LoaderCircle className="spin" /> Workspace wird geladen …
-      </main>
-    );
+    return <AccessLoading message="Workspace wird geladen" />;
   if (!demoMode && !w.user) return <Login />;
   if (!demoMode && w.passwordGate === "checking")
-    return (
-      <main className="password-gate">
-        <div className="password-gate-form" role="status">
-          <p>Dein Zugang wird geprüft …</p>
-          {w.error && <>
-            <p role="alert">{w.error}</p>
-            <button className="primary" onClick={() => void w.refresh()}>Erneut versuchen</button>
-          </>}
-        </div>
-      </main>
-    );
+    return <AccessLoading error={w.error} retry={w.refresh} />;
   if (!demoMode && w.passwordGate === "required")
     return <InitialPassword email={w.user!.email || ""} complete={w.refresh} />;
   if (!demoMode && (w.passwordGate === "reauthenticate" || w.passwordGate === "unavailable"))
@@ -262,21 +249,7 @@ export default function App() {
       </main>
     );
   if (!w.state)
-    return (
-      <main className="setup">
-        <LoaderCircle className="spin" />
-        <h1>Zugriffsrechte werden geprüft …</h1>
-        {w.error && (
-          <>
-            <p role="alert">{w.error}</p>
-            <button className="primary" onClick={() => void w.refresh()}>
-              <RefreshCw size={15} />
-              Erneut versuchen
-            </button>
-          </>
-        )}
-      </main>
-    );
+    return <AccessLoading error={w.error} retry={w.refresh} />;
   if (!w.current?.active)
     return (
       <main className="setup">
