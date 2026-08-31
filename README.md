@@ -1,6 +1,6 @@
 # SIMPL Frontend
 
-React + TypeScript taskboard. Production hosting: Vercel.
+React + TypeScript taskboard. Production: https://simpl-salescrew.vercel.app, hosted by Vercel project `sales-crew/simpl`. GitHub `main` automatically deploys the latest version.
 
 ## Development
 
@@ -14,4 +14,4 @@ Import `SalesCrew/SIMPL-Frontend` into Vercel with this repository as the root d
 
 Only publishable configuration belongs in `VITE_` variables. Never add the Supabase secret/service-role key to the frontend or Git.
 
-The companion API is [SIMPL-Backend](https://github.com/SalesCrew/SIMPL-Backend). Auth, authorized board operations, Realtime, and file transfers use Supabase directly with RLS; privileged account and attachment operations use the API.
+The companion API is [SIMPL-Backend](https://github.com/SalesCrew/SIMPL-Backend), hosted at https://simpl-backend-production.up.railway.app. Auth, authorized board operations, Realtime, and uploads use Supabase directly with RLS. Account operations, attachment finalization/removal and every file download use the API. Downloads must not fall back to direct Storage URLs: live authorization is checked by the backend on every request, and client Storage reads are denied.
