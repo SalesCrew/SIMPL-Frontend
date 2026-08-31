@@ -212,6 +212,63 @@
 .docs-shortcuts span i { color: #9aa696; font-size: 8px; font-style: normal; }
 .docs-shortcuts p { color: #697767; font-size: 10.5px; }
 .docs-faq-section { border-bottom: 0; margin-bottom: 34px; padding-bottom: 0; }
+.docs-faq-search {
+  min-height: 48px;
+  margin-bottom: 20px;
+  padding: 0 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #dfe7da;
+  border-radius: 13px;
+  background: #fff;
+  color: #82927c;
+  transition: border-color .18s, box-shadow .18s;
+}
+.docs-faq-search:focus-within {
+  border-color: #a8bda0;
+  box-shadow: 0 0 0 3px #7fa07114;
+}
+.docs-faq-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #3f5146;
+  font: inherit;
+  font-size: 11.5px;
+}
+.docs-faq-search input::placeholder { color: #9aa697; }
+.docs-faq-search input::-webkit-search-cancel-button { display: none; }
+.docs-faq-search button {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: #f1f5ee;
+  color: #7f8f79;
+}
+.docs-filtered-faq {
+  overflow: hidden;
+  border: 1px solid #dfe7da;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 14px 36px #52634a0d;
+}
+.docs-filtered-faq-head {
+  min-height: 45px;
+  padding: 0 17px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e7ece3;
+  background: #f7f9f5;
+}
+.docs-filtered-faq-head b { color: #52634f; font-size: 10px; }
+.docs-filtered-faq-head span { color: #8e9a89; font-size: 9px; }
 .docs-faq-groups { display: grid; gap: 28px; }
 .docs-faq-groups > section > h3 { margin-bottom: 9px; color: #73826f; font-size: 9px; letter-spacing: .05em; text-transform: uppercase; }
 .docs-faq-groups details { border-top: 1px solid #e4e9e0; }
@@ -233,6 +290,87 @@
 .docs-faq-groups summary span { color: #96a38f; font-size: 17px; font-weight: var(--font-weight-regular); transition: transform .18s; }
 .docs-faq-groups details[open] summary span { transform: rotate(45deg); }
 .docs-faq-groups details p { max-width: 720px; padding: 0 34px 18px 2px; color: #7f8b7c; font-size: 10.5px; line-height: 1.7; }
+.docs-faq-results details,
+.docs-search-popover-results details { border-bottom: 1px solid #e7ece3; }
+.docs-faq-results details:last-child,
+.docs-search-popover-results details:last-child { border-bottom: 0; }
+.docs-faq-results summary,
+.docs-search-popover-results summary {
+  min-height: 58px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  cursor: pointer;
+  list-style: none;
+  color: #405047;
+}
+.docs-faq-results summary::-webkit-details-marker,
+.docs-search-popover-results summary::-webkit-details-marker { display: none; }
+.docs-faq-results summary > span,
+.docs-search-popover-results summary > span { display: grid; gap: 4px; font-size: 11px; font-weight: var(--font-weight-semibold); }
+.docs-faq-results summary small,
+.docs-search-popover-results summary small { color: #91a08b; font-size: 7.5px; font-weight: var(--font-weight-bold); letter-spacing: .06em; text-transform: uppercase; }
+.docs-faq-results summary i,
+.docs-search-popover-results summary i { color: #91a08b; font-size: 16px; font-style: normal; transition: transform .18s; }
+.docs-faq-results details[open] summary i,
+.docs-search-popover-results details[open] summary i { transform: rotate(45deg); }
+.docs-faq-results details p,
+.docs-search-popover-results details p { padding: 0 42px 17px 16px; color: #7f8b7c; font-size: 10.5px; line-height: 1.7; }
+.docs-search-empty,
+.docs-search-prompt {
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: #78906f;
+}
+.docs-search-empty > div,
+.docs-search-prompt > div { display: grid; gap: 4px; }
+.docs-search-empty b,
+.docs-search-prompt b { color: #4b5f50; font-size: 10.5px; }
+.docs-search-empty span,
+.docs-search-prompt span { color: #899685; font-size: 9.5px; line-height: 1.5; }
+.docs-header-search { position: relative; width: 320px; z-index: 40; }
+.docs-search-popover {
+  position: absolute;
+  top: calc(100% + 9px);
+  right: 0;
+  width: min(430px, calc(100vw - 96px));
+  max-height: min(440px, calc(100dvh - 105px));
+  overflow-y: auto;
+  border: 1px solid #dfe7da;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 22px 55px #33452e1c;
+  color: #405047;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-5px);
+  transition: opacity .16s, transform .16s, visibility 0s linear .16s;
+}
+.docs-header-search:focus-within .docs-search-popover {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+  transition-delay: 0s;
+}
+.docs-search-popover > header {
+  min-height: 43px;
+  padding: 0 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e7ece3;
+  background: #f7f9f5;
+}
+.docs-search-popover > header span { color: #516451; font-size: 10px; font-weight: var(--font-weight-semibold); }
+.docs-search-popover > header small { color: #8e9a89; font-size: 8.5px; }
+.docs-search-popover-results summary { min-height: 54px; padding: 10px 14px; }
+.docs-search-popover-results details p { padding: 0 36px 15px 14px; font-size: 10px; }
 .docs-footer { padding: 23px; display: flex; align-items: center; justify-content: space-between; gap: 30px; border-radius: 17px; background: #283d31; color: #fff; }
 .docs-footer > div { display: flex; align-items: center; gap: 13px; }
 .docs-footer p { display: grid; gap: 4px; }
@@ -263,9 +401,14 @@
   .docs-shortcuts > div, .docs-shortcuts > div:nth-child(odd), .docs-shortcuts > div:nth-last-child(-n+2) { border-right: 0; border-bottom: 1px solid #e8ece5; }
   .docs-shortcuts > div:last-child { border-bottom: 0; }
   .docs-footer { align-items: flex-start; flex-direction: column; }
+  .docs-header-search { width: 100%; }
+  .docs-search-popover { width: min(430px, calc(100vw - 82px)); }
   .sidebar-bottom > .sidebar-docs { display: flex; }
 }
 @media (prefers-reduced-motion: reduce) {
   .docs-page { scroll-behavior: auto; }
-  .docs-faq-groups summary span { transition: none; }
+  .docs-faq-groups summary span,
+  .docs-faq-results summary i,
+  .docs-search-popover-results summary i,
+  .docs-search-popover { transition: none; }
 }

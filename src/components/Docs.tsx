@@ -19,7 +19,9 @@ import {
   Sparkles,
   Tags,
   Users,
+  X,
 } from "lucide-react";
+import { findFaqMatches, type FaqGroup, type FaqMatch } from "../faq-search";
 import "./docs.css";
 
 const quickSteps = [
@@ -45,7 +47,7 @@ const quickSteps = [
   },
 ];
 
-const faqGroups = [
+export const faqGroups: FaqGroup[] = [
   {
     title: "Anmeldung & Zugriff",
     questions: [
@@ -81,7 +83,7 @@ const faqGroups = [
       ["Wie viele Dateien sind möglich?", "Eine Karte kann bis zu 20 direkte Anhänge enthalten. Zu einem einzelnen Kommentar kannst du bis zu 10 Dateien hinzufügen."],
       ["Kann ich Screenshots einfügen?", "Ja. Du kannst Bilder auswählen, per Drag-and-drop ablegen oder aus der Zwischenablage einfügen. Bilder lassen sich vergrößern, kopieren und herunterladen."],
       ["Wie filtere ich nach einer Person?", "Wähle die Person im Mitgliederfilter. SIMPL zeigt Karten, die diese Person erstellt hat oder denen sie zugewiesen ist."],
-      ["Wie funktioniert die Suche?", "Die Suche prüft Kartentitel und Beschreibung im aktuellen Workspace. Mit Strg + K beziehungsweise ⌘ K springst du direkt in das Suchfeld."],
+      ["Wie funktioniert die Suche?", "Im Taskboard prüft die Suche Kartentitel und Beschreibungen im aktuellen Workspace. Auf der Docs-Seite findet dasselbe Feld passende Q&A-Antworten – auch wenn du deine Frage anders formulierst. Mit Strg + K beziehungsweise ⌘ K springst du direkt in das Suchfeld."],
       ["Was bedeutet der doppelte Haken?", "Damit markierst du, dass eine Karte wahrgenommen wurde. SIMPL speichert auch, wer diese Markierung gesetzt hat."],
       ["Wann klingelt die Glocke?", "Wenn es neue Kommentare zu relevanten Karten gibt. Die Glocke wird gelb und bewegt sich; im Neuigkeiten-Fenster kannst du Einträge einzeln oder gesammelt als gesehen markieren."],
       ["Wo finde ich alte Karten?", "Im „Archiv“. Archivierte Trello-Karten sind vollständig als erledigt markiert und nur zum Nachlesen verfügbar."],
@@ -92,7 +94,49 @@ const faqGroups = [
   },
 ];
 
-export function DocsPage() {
+function SearchResults({ matches, compact = false }: { matches: FaqMatch[]; compact?: boolean }) {
+  if (!matches.length) return (
+    <div className={`docs-search-empty${compact ? " compact" : ""}`}>
+      <CircleHelp size={18} />
+      <div><b>Keine direkte Antwort gefunden.</b><span>Versuche ein anderes Wort oder einen kürzeren Satz.</span></div>
+    </div>
+  );
+  return (
+    <div className={compact ? "docs-search-popover-results" : "docs-faq-results"}>
+      {matches.map((match) => <details key={match.question}>
+        <summary>
+          <span><small>{match.group}</small>{match.question}</span>
+          <i aria-hidden="true">+</i>
+        </summary>
+        <p>{match.answer}</p>
+      </details>)}
+    </div>
+  );
+}
+
+export function DocsSearchPopover({ query }: { query: string }) {
+  const cleanQuery = query.trim();
+  const matches = cleanQuery ? findFaqMatches(faqGroups, cleanQuery, 5) : [];
+  return (
+    <div className="docs-search-popover" role="region" aria-label="Passende Q&A-Antworten" aria-live="polite">
+      {cleanQuery ? <>
+        <header><span>Passende Antworten</span><small>{matches.length} Treffer</small></header>
+        <SearchResults matches={matches} compact />
+      </> : <div className="docs-search-prompt">
+        <CircleHelp size={18} />
+        <div><b>Frag SIMPL.</b><span>Zum Beispiel: „Wie lade ich eine PDF hoch?“</span></div>
+      </div>}
+    </div>
+  );
+}
+
+const ignoreSearch = () => {};
+
+export function DocsPage({ search = "", onSearchChange = ignoreSearch }: {
+  search?: string;
+  onSearchChange?: (value: string) => void;
+}) {
+  const matches = findFaqMatches(faqGroups, search);
   return (
     <div className="docs-page">
       <header className="docs-hero">
@@ -229,16 +273,30 @@ export function DocsPage() {
               <span><CircleHelp size={16} /></span>
               <div><small>Q&amp;A</small><h2>Fragen, die im Alltag auftauchen.</h2></div>
             </div>
-            <p className="docs-lead">Klicke auf eine Frage, um die kurze Antwort einzublenden.</p>
-            <div className="docs-faq-groups">
-              {faqGroups.map((group) => <section key={group.title}>
-                <h3>{group.title}</h3>
-                {group.questions.map(([question, answer]) => <details key={question}>
-                  <summary>{question}<span aria-hidden="true">+</span></summary>
-                  <p>{answer}</p>
-                </details>)}
-              </section>)}
+            <p className="docs-lead">Stelle deine Frage in deinen eigenen Worten oder suche nach einem Stichwort.</p>
+            <div className="docs-faq-search" role="search">
+              <Search size={17} />
+              <input
+                type="search"
+                value={search}
+                onChange={(event) => onSearchChange(event.target.value)}
+                placeholder="Wie können wir dir helfen?"
+                aria-label="Fragen und Antworten durchsuchen"
+              />
+              {search && <button type="button" aria-label="Q&A-Suche leeren" onClick={() => onSearchChange("")}><X size={14} /></button>}
             </div>
+            {search.trim() ? <div className="docs-filtered-faq" aria-live="polite">
+              <div className="docs-filtered-faq-head"><b>Passende Antworten</b><span>{matches.length} Treffer</span></div>
+              <SearchResults matches={matches} />
+            </div> : <div className="docs-faq-groups">
+                {faqGroups.map((group) => <section key={group.title}>
+                  <h3>{group.title}</h3>
+                  {group.questions.map(([question, answer]) => <details key={question}>
+                    <summary>{question}<span aria-hidden="true">+</span></summary>
+                    <p>{answer}</p>
+                  </details>)}
+                </section>)}
+              </div>}
           </section>
 
           <footer className="docs-footer">

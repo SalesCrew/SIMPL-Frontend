@@ -24,6 +24,9 @@ describe("Docs in the application shell", () => {
     expect(html.indexOf('class="profile-bar"')).toBeLessThan(html.indexOf('aria-label="Docs"'));
     expect(html.indexOf('aria-label="Docs"')).toBeLessThan(html.indexOf('aria-label="Abmelden"'));
     expect(html).toContain("Docs</span>");
+    expect(html).toContain('placeholder="Frage zu SIMPL stellen …"');
+    expect(html).toContain('aria-label="Fragen und Antworten durchsuchen"');
+    expect(html).toContain('class="docs-search-popover"');
     expect(html).not.toContain('class="board-columns"');
   });
 });

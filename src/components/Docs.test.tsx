@@ -31,4 +31,13 @@ describe("SIMPL documentation", () => {
     expect(html).toContain("Wie erstelle ich eine Checkliste aus der Beschreibung?");
     expect(html).toContain("Was mache ich, wenn etwas fehlt oder nicht lädt?");
   });
+
+  it("filters Q&A into expandable results", () => {
+    const filtered = renderToStaticMarkup(<DocsPage search="PDF hochladen" />);
+    expect(filtered).toContain('type="search"');
+    expect(filtered).toContain("Passende Antworten");
+    expect(filtered).toContain("Welche Dateien kann ich anhängen?");
+    expect(filtered).toContain("Treffer");
+    expect(filtered.match(/<details>/g)?.length).toBeLessThan(29);
+  });
 });

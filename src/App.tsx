@@ -49,7 +49,7 @@ import {
 import { Dialog } from "./components/ui/Dialog";
 import { Select } from "./components/ui/Select";
 import { Tooltip, TooltipProvider } from "./components/ui/Tooltip";
-import { DocsPage } from "./components/Docs";
+import { DocsPage, DocsSearchPopover } from "./components/Docs";
 import { timestamp, type Column, type Profile, type Workspace } from "./types";
 
 function Login() {
@@ -527,19 +527,20 @@ export default function App() {
               <span>{title}</span>
             </div>
             <div className="topbar-actions">
-              <div className="search">
+              <div className={`search${view === "docs" ? " docs-header-search" : ""}`}>
                 <Search size={17} />
                 <input
                   ref={searchRef}
-                  placeholder="Karten durchsuchen …"
-                  aria-label="Karten durchsuchen"
+                  placeholder={view === "docs" ? "Frage zu SIMPL stellen …" : "Karten durchsuchen …"}
+                  aria-label={view === "docs" ? "Fragen und Antworten durchsuchen" : "Karten durchsuchen"}
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
-                    if (view === "team" || view === "docs") setView("board");
+                    if (view === "team") setView("board");
                   }}
                 />
                 <kbd>⌘ K</kbd>
+                {view === "docs" && <DocsSearchPopover query={search} />}
               </div>
               <NotificationBell
                 unreadCount={unread.length}
@@ -678,7 +679,7 @@ export default function App() {
               )}
             </section>
           )}
-          {view === "docs" ? <DocsPage /> : <>
+          {view === "docs" ? <DocsPage search={search} onSearchChange={setSearch} /> : <>
           {view === "team" && admin && boardHeading}
           {view === "team" && admin ? (
             <div className="team-page">
