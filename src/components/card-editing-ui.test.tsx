@@ -68,6 +68,21 @@ describe("card editing controls", () => {
     expect(html).not.toContain('class="field-save');
     expect(html).not.toContain("has-save-control");
   });
+  it("keeps the placeholder empty between animated tips", () => {
+    const html = renderToStaticMarkup(
+      <CardTextField
+        label="Beschreibung"
+        multiline
+        value=""
+        onChange={() => {}}
+        maxLength={20000}
+        placeholder="Fallback darf nicht aufblitzen"
+        placeholderSequence={["", "Nächster Tipp"]}
+      />,
+    );
+    expect(html).toContain('placeholder=""');
+    expect(html).not.toContain("Fallback darf nicht aufblitzen");
+  });
   it.each([false, true])(
     "releases the reserved space when the value is saved (description=%s)",
     (multiline) => {

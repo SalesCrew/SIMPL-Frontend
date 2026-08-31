@@ -93,7 +93,7 @@ export function useTypewriterPlaceholder(
     return () => window.clearTimeout(timer);
   }, [active, messages, reduceMotion, state]);
 
-  if (!messages?.length) return "";
+  if (!messages?.length) return undefined;
   if (reduceMotion) return messages[0];
   return typewriterText(state, messages);
 }

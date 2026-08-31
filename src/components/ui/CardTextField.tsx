@@ -76,7 +76,7 @@ export function CardTextField({
             rows={4}
             maxLength={maxLength}
             value={value}
-            placeholder={animatedPlaceholder || placeholder}
+            placeholder={animatedPlaceholder ?? placeholder}
             onChange={(e) => onChange(e.target.value)}
           />
         ) : (
