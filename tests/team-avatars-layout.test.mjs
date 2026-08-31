@@ -32,6 +32,9 @@ describe("Inline avatar expansion presentation", () => {
   it("keeps long rows reachable without moving the count or covering the title", () => {
     expect(rule(".team-avatar-row")).toContain("max-width: var(--avatar-available-width");
     expect(rule(".team-avatar-viewport")).toContain("overflow-x: auto;");
+    expect(rule(".team-avatar-viewport")).toContain("scrollbar-width: none;");
+    expect(rule(".team-avatar-viewport::-webkit-scrollbar")).toContain("display: none;");
+    expect(rule(".team-avatar-viewport::-webkit-scrollbar")).toContain("height: 0;");
     expect(rule(".team-avatar-viewport")).toContain("min-width: 0;");
     expect(rule(".team-avatar-row")).toContain("align-items: flex-start;");
     expect(rule(".team-avatar-group .avatar-more")).toContain("margin: 6px 0 0 -8px;");
