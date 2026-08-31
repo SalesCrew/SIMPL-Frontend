@@ -96,7 +96,7 @@ function Login() {
             </span>
           </div>
         </div>
-        <small>SalesCrew · Inkognito · Merchandizing</small>
+        <small>SalesCrew · Inkognito · Merchandising</small>
       </div>
       <div className="login-form-wrap">
         <form className="login-form" onSubmit={login}>

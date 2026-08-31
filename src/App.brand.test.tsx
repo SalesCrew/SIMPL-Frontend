@@ -20,7 +20,7 @@ describe("SIMPL login branding", () => {
     expect(html).toContain('src="/images/simple-mark.png"');
     expect(html).toContain('<span class="brand-name">simpl</span>');
     expect(html).not.toContain('aria-label="Simple Startseite"');
-    expect(html).toContain("SalesCrew · Inkognito · Merchandizing");
+    expect(html).toContain("SalesCrew · Inkognito · Merchandising");
     expect(html).not.toContain("Trello");
   });
 
