@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useWorkspace } from "./useWorkspace";
 import { workspaceBoard } from "./domain";
+import { cardMatchesMember } from "./card-filters";
 import { WorkspaceSwitcher, WorkspaceEditor } from "./components/Workspaces";
 import { demoMode, supabase } from "./data";
 import { Board, Avatar } from "./components/Board";
@@ -282,7 +283,7 @@ export default function App() {
         `${c.title} ${c.description}`
           .toLowerCase()
           .includes(search.toLowerCase())) &&
-      (!memberFilter || c.assignee_id === memberFilter) &&
+      (!memberFilter || cardMatchesMember(c, memberFilter)) &&
       (!labelFilter || c.label_ids.includes(labelFilter)) &&
       (!statusFilter ||
         (statusFilter === "unread"
@@ -292,9 +293,7 @@ export default function App() {
             : statusFilter === "open"
               ? !c.completed_at
               : !!c.completed_at)) &&
-      (view !== "mine" ||
-        c.assignee_id === current.id ||
-        c.created_by === current.id) &&
+      (view !== "mine" || cardMatchesMember(c, current.id)) &&
       (view !== "done" || !!c.completed_at),
   );
   const unread = state.notifications
@@ -826,7 +825,7 @@ export default function App() {
                             </PopoverPrimitive.Close>
                           </header>
                           {view === "archive" && <label className="field">
-                            Zugewiesen an
+                            Erstellt von / zugewiesen an
                             <Select label="Archiv nach Mitglied filtern" variant="filter" value={memberFilter} onValueChange={setMemberFilter}
                               options={[
                                 { value: "", label: "Alle Mitglieder", icon: <Users size={15} /> },
