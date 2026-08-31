@@ -2670,16 +2670,6 @@ textarea {
   flex-direction: column;
   gap: 24px;
 }
-.welcome-icon {
-  width: 55px;
-  height: 55px;
-  border-radius: 18px;
-  background: #f2f6ee;
-  color: #8b9e7b;
-  display: grid;
-  place-items: center;
-  margin-bottom: 3px;
-}
 .login-form h2 {
   font-family: var(--font-ui);
   font-size: 25px;
@@ -3334,9 +3324,6 @@ textarea {
   }
   .login-form-wrap {
     padding: 40px 28px;
-  }
-  .welcome-icon {
-    display: none;
   }
   .drag-handle {
     opacity: 1;

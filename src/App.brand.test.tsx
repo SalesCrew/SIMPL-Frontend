@@ -24,11 +24,28 @@ describe("SIMPL login branding", () => {
     expect(html).not.toContain("Trello");
   });
 
-  it("preserves the login form and existing team joke", () => {
+  it("uses concise company-wide copy instead of the developer joke", () => {
     const html = renderToStaticMarkup(<App />);
+    expect(html).toContain("Gemeinsam");
+    expect(html).toContain("<em>weiter.</em>");
+    expect(html).toContain("Projekte und Aufgaben im Überblick.");
+    expect(html).not.toContain("Ein Entwickler.");
+    expect(html).not.toContain("Tausend");
+    expect(html).not.toContain("Kilian zu wenig zu tun");
+    expect(html).not.toContain("Schreiben Sie ihm eine Karte.");
+  });
+
+  it("keeps the login form without its decorative icon or subtitle", () => {
+    const html = renderToStaticMarkup(<App />);
+    expect(html).toContain("Schön, dass du da bist.");
+    expect(html).not.toContain("welcome-icon");
+    expect(html).not.toContain("lucide-lock-keyhole");
+    expect(html).not.toContain("Melde dich an und mach gemeinsam weiter.");
     expect(html).toContain('type="email"');
     expect(html).toContain('type="password"');
-    expect(html).toContain("Schreiben Sie ihm eine Karte.");
+    expect(html).toContain('autoComplete="username"');
+    expect(html).toContain('autoComplete="current-password"');
     expect(html).toContain("Zum Workspace");
+    expect(html).toContain("Wende dich an deinen Administrator.");
   });
 });

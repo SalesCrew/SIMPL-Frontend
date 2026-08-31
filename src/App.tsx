@@ -77,15 +77,11 @@ function Login() {
         <div>
           <span className="eyebrow">EIN BOARD. EIN TEAM.</span>
           <h1>
-            Ein Entwickler.
+            Gemeinsam
             <br />
-            Tausend <em>To-dos.</em>
+            <em>weiter.</em>
           </h1>
-          <p>
-            Haben Sie das Gefühl, dass Kilian zu wenig zu tun hat?
-            <br />
-            Schreiben Sie ihm eine Karte.
-          </p>
+          <p>Projekte und Aufgaben im Überblick.</p>
           <div className="login-pills">
             <span>
               <CheckCheck size={15} />
@@ -101,11 +97,7 @@ function Login() {
       </div>
       <div className="login-form-wrap">
         <form className="login-form" onSubmit={login}>
-          <span className="welcome-icon">
-            <LockKeyhole size={24} />
-          </span>
           <h2>Schön, dass du da bist.</h2>
-          <p>Melde dich an und mach gemeinsam weiter.</p>
           <label className="field">
             E-Mail-Adresse
             <input
