@@ -1,0 +1,243 @@
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { Action } from "./domain";
+import type { BoardState, Profile, Workspace, AccessRevision } from "./types";
+
+const url = import.meta.env.VITE_SUPABASE_URL;
+const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+export const demoMode =
+  import.meta.env.VITE_DEMO_MODE === "true" ||
+  (import.meta.env.DEV && !url && !key);
+export const supabase: SupabaseClient | null =
+  url && key
+    ? createClient(url, key, {
+        global: {
+          fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }),
+        },
+      })
+    : null;
+
+export async function apiRequest(path: string, method: string, body?: unknown) {
+  const session = (await supabase!.auth.getSession()).data.session;
+  if (!session) throw new Error("Bitte erneut anmelden.");
+  const response = await fetch(
+    `${import.meta.env.VITE_API_URL || ""}/api${path}`,
+    {
+      method,
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        "Content-Type": "application/json",
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      signal: AbortSignal.timeout(60000),
+    },
+  );
+  if (response.status === 204) return;
+  const json = await response.json();
+  if (!response.ok)
+    throw new Error(json.error || "Die Anfrage ist fehlgeschlagen.");
+  return json;
+}
+
+async function allRows(table: string) {
+  const rows: unknown[] = [];
+  for (let offset = 0; ; offset += 1000) {
+    const { data, error } = await supabase!
+      .from(table)
+      .select("*")
+      .order("id")
+      .range(offset, offset + 999);
+    if (error) throw error;
+    rows.push(...data);
+    if (data.length < 1000) return rows;
+  }
+}
+export async function accessContext(): Promise<{
+  profile: Profile | null;
+  workspaces: Workspace[];
+  revision: AccessRevision | null;
+}> {
+  const { data, error } = await supabase!.rpc("workspace_access_context");
+  if (error) throw error;
+  return data;
+}
+export async function loadBoard(
+  onContext?: (revision: AccessRevision | null) => void,
+): Promise<BoardState> {
+  const tables = [
+    "profiles",
+    "columns",
+    "labels",
+    "cards",
+    "comments",
+    "notifications",
+    "attachments",
+  ] as const;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const context = await accessContext();
+    onContext?.(context.revision);
+    if (!context.profile)
+      return {
+        workspaces: [],
+        profiles: [],
+        columns: [],
+        labels: [],
+        cards: [],
+        comments: [],
+        notifications: [],
+        attachments: [],
+        workspace_blocks: [],
+        access_revision: context.revision || undefined,
+      };
+    const [values, blocks] = await Promise.all([
+      Promise.all(tables.map(allRows)),
+      context.profile.role === "admin"
+        ? allRows("workspace_blocks")
+        : Promise.resolve([]),
+    ]);
+    // A rule/home assignment can change while these independent requests are running.
+    const after = await accessContext();
+    if (
+      after.profile?.id !== context.profile.id ||
+      after.revision?.authorization_version !==
+        context.revision?.authorization_version
+    ) {
+      onContext?.(after.revision);
+      continue;
+    }
+    return {
+      ...Object.fromEntries(tables.map((key, i) => [key, values[i]])),
+      workspaces: after.workspaces,
+      workspace_blocks: blocks,
+      access_revision: after.revision || undefined,
+    } as unknown as BoardState;
+  }
+  throw new Error("Zugriffsrechte haben sich geändert. Bitte erneut laden.");
+}
+export async function runRemote(action: Action) {
+  if (!supabase) throw new Error("Supabase ist noch nicht eingerichtet.");
+  const db = supabase;
+  let result;
+  switch (action.type) {
+    case "workspace.save":
+      result = await db.rpc("save_workspace", {
+        p_id: action.workspace.id,
+        p_name: action.workspace.name,
+        p_color: action.workspace.color,
+        p_isolated: !!action.workspace.isolated,
+        p_blocked: action.blocked_ids || [],
+      });
+      break;
+    case "card.create":
+      result = await db.from("cards").insert({
+        ...(action.id ? { id: action.id } : {}),
+        title: action.title,
+        description: action.description || "",
+        column_id: action.column_id,
+        project_id: action.project_id,
+        assignee_id: action.assignee_id,
+        label_ids: action.label_ids || [],
+      });
+      break;
+    case "card.update":
+      result = await db
+        .from("cards")
+        .update(action.patch)
+        .eq("id", action.id)
+        .select("id")
+        .single();
+      break;
+    case "card.move":
+      result = await db.rpc("move_card", {
+        p_card: action.id,
+        p_column: action.column_id,
+        p_before: action.before_id || null,
+      });
+      break;
+    case "card.complete":
+      result = await db.rpc("set_card_completed", {
+        p_card: action.id,
+        p_completed: action.completed,
+      });
+      break;
+    case "card.review":
+      result = await db
+        .from("cards")
+        .update({
+          reviewed_at: action.reviewed ? new Date().toISOString() : null,
+          reviewed_by: action.reviewed
+            ? (await db.auth.getUser()).data.user?.id
+            : null,
+        })
+        .eq("id", action.id)
+        .select("id")
+        .single();
+      break;
+    case "card.delete":
+      await apiRequest(`/cards/${action.id}`, "DELETE");
+      return;
+    case "attachment.add":
+      // Metadata was finalized by the authenticated upload API; refresh the board.
+      return;
+    case "attachment.delete":
+      await apiRequest(`/attachments/${action.id}`, "DELETE");
+      return;
+    case "comment.create":
+      result = await db
+        .from("comments")
+        .insert({
+          card_id: action.card_id,
+          body: action.body.trim(),
+          attachment_ids: (action.attachments || []).map((a) => a.id),
+        });
+      break;
+    case "notifications.seen": {
+      let query = db
+        .from("notifications")
+        .update({ seen_at: new Date().toISOString() })
+        .is("seen_at", null);
+      if (action.id) query = query.eq("id", action.id);
+      result = await query;
+      break;
+    }
+    case "column.save":
+      result = await db.from("columns").upsert(action.column);
+      break;
+    case "column.delete":
+      result = await db
+        .from("columns")
+        .delete()
+        .eq("id", action.id)
+        .select("id")
+        .single();
+      break;
+    case "label.save":
+      result = await db.from("labels").upsert(action.label);
+      break;
+    case "profile.save": {
+      const session = (await db.auth.getSession()).data.session;
+      if (!session) throw new Error("Bitte erneut anmelden.");
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || ""}/api/users${action.isNew ? "" : "/" + action.profile.id}`,
+        {
+          method: action.isNew ? "POST" : "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            ...action.profile,
+            password: action.password,
+          }),
+          signal: AbortSignal.timeout(20000),
+        },
+      );
+      const json = await response.json();
+      if (!response.ok)
+        throw new Error(
+          json.error || "Zugang konnte nicht gespeichert werden.",
+        );
+      return;
+    }
+  }
+  if (result?.error) throw result.error;
+}
