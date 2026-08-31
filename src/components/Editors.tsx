@@ -152,13 +152,18 @@ export function CardEditor({
   return (
     <Dialog
       wide
-      title={
-        card ? "Ein guter nächster Schritt." : "Was steht als Nächstes an?"
-      }
+      title={card ? card.title : "Was steht als Nächstes an?"}
       description={
-        card
-          ? `Karte in ${state.columns.find((c) => c.id === card.column_id)?.name || "Projekt"}`
-          : "Eine Idee, eine Aufgabe – und ein klarer Platz dafür."
+        card ? (
+          <>
+            Erstellt von{" "}
+            {state.profiles.find((p) => p.id === card.created_by)?.name ||
+              "Unbekanntes Mitglied"}{" "}
+            · <time dateTime={card.created_at}>{timestamp(card.created_at)}</time>
+          </>
+        ) : (
+          "Eine Idee, eine Aufgabe – und ein klarer Platz dafür."
+        )
       }
       onClose={close}
       closeOnOutside
@@ -441,13 +446,6 @@ export function CardEditor({
                 Ja, löschen
               </button>
             </div>
-          )}
-          {card && (
-            <p className="detail-created">
-              Erstellt von{" "}
-              {state.profiles.find((p) => p.id === card.created_by)?.name} ·{" "}
-              {timestamp(card.created_at)}
-            </p>
           )}
         </form>
         <aside className="comments-panel" ref={commentViewport.attachPanel}>

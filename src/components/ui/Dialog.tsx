@@ -11,7 +11,7 @@ export function Dialog({
   closeOnOutside = false,
 }: {
   title: string;
-  description?: string;
+  description?: ReactNode;
   children: ReactNode;
   onClose: () => void;
   wide?: boolean;

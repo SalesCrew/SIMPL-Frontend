@@ -1733,6 +1733,10 @@ textarea {
   border-bottom: 1px solid #edf0e9;
   align-items: flex-start;
 }
+.modal-heading > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .modal-heading h2 {
   font-family: var(--font-ui);
   font-size: 19px;
@@ -1903,13 +1907,6 @@ textarea {
 }
 .blue-text {
   color: #6c9bbb;
-}
-.detail-created {
-  font-size: 9px;
-  color: #a0aa96;
-  padding-top: 10px;
-  border-top: 1px solid #edf1e7;
-  line-height: 1.8;
 }
 .comments-panel {
   position: sticky;
