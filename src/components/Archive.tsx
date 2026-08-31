@@ -37,6 +37,7 @@ export function ArchivedCard({ card, state, close }: { card: Card; state: BoardS
       <section className="detail-main">
         <p className="archive-notice"><Archive size={17} /> Archiviert am {timestamp(card.archived_at!)}. Originaler Trello-Stand.</p>
         <p className="form-hint">{state.workspaces.find((workspace) => workspace.id === card.workspace_id)?.name} · {state.columns.find((column) => column.id === card.column_id)?.name}</p>
+        {!card.project_id && <p className="form-hint">Kein eindeutiges Ursprungsprojekt in Trello. Originale Projektlabels bleiben erhalten.</p>}
         <div className="label-selector">{state.labels.filter((label) => card.label_ids.includes(label.id)).map((label) => <span className={`label ${label.color}`} key={label.id}>{label.name}</span>)}</div>
         {card.description && <section><h3>Beschreibung</h3><p className="archive-description">{card.description}</p></section>}
         {card.due_at && <p>Fällig · <time dateTime={card.due_at}>{timestamp(card.due_at)}</time></p>}

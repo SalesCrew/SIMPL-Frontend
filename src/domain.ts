@@ -236,6 +236,7 @@ function returnLocation(state: BoardState, card: Card) {
         c.kind === "project" &&
         c.workspace_id === card.workspace_id,
     )?.id || card.project_id;
+  if (!column) throw new Error("Diese archivierte Karte hat kein eindeutiges Ursprungsprojekt.");
   const cards = orderedCards(state, column).filter((c) => c.id !== card.id);
   if (cards.some((c) => c.id === card.return_before_id))
     return { column_id: column, before_id: card.return_before_id };
