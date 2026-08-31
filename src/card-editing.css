@@ -7,14 +7,16 @@
   width: 100%;
   box-sizing: border-box;
 }
-.card-text-field .card-text-control input {
+.card-text-field .card-text-control.has-save-control input {
   padding-right: 122px;
+}
+.card-text-field .card-text-control.has-save-control textarea {
+  padding-bottom: 52px;
 }
 .card-text-field .card-text-control textarea {
   display: block;
   min-height: 136px;
   max-height: 340px;
-  padding-bottom: 52px;
   resize: none;
   overflow-y: auto;
   scrollbar-width: none;

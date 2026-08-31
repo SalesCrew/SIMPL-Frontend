@@ -29,6 +29,7 @@ export function CardTextField({
   const savedText = useRef("");
   const dirty = onSave && value !== savedValue;
   const success = phase === "saved" && value === savedText.current;
+  const showSaveControl = Boolean(dirty || phase === "saving" || success);
   const textarea = useRef<HTMLTextAreaElement | null>(null);
   const fit = useCallback((node: HTMLTextAreaElement | null) => {
     textarea.current = node;
@@ -39,7 +40,7 @@ export function CardTextField({
   }, []);
   useEffect(() => {
     fit(textarea.current);
-  }, [value, fit]);
+  }, [value, showSaveControl, fit]);
   useEffect(() => () => clearTimeout(timer.current), []);
   async function save() {
     if (!onSave || phase === "saving") return;
@@ -58,7 +59,9 @@ export function CardTextField({
       <label htmlFor={`card-${multiline ? "description" : "title"}`}>
         {label}
       </label>
-      <div className={`card-text-control ${dirty ? "is-dirty" : ""}`}>
+      <div
+        className={`card-text-control ${dirty ? "is-dirty" : ""}${showSaveControl ? " has-save-control" : ""}`}
+      >
         {multiline ? (
           <textarea
             id="card-description"
@@ -86,7 +89,7 @@ export function CardTextField({
             }}
           />
         )}
-        {(dirty || phase === "saving" || success) && (
+        {showSaveControl && (
           <button
             type="button"
             className={`field-save ${success ? "is-saved" : ""}`}

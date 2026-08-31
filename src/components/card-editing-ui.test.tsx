@@ -17,6 +17,7 @@ describe("card editing controls", () => {
       />,
     );
     expect(html).not.toContain('class="field-save');
+    expect(html).not.toContain("has-save-control");
   });
   it.each([false, true])(
     "puts an explicit, non-submit save button inside the changed field (description=%s)",
@@ -36,6 +37,7 @@ describe("card editing controls", () => {
       expect(html).toContain(`aria-label="${label} speichern"`);
       expect(html).toContain('type="button"');
       expect(html).toContain("card-text-control is-dirty");
+      expect(html).toContain("has-save-control");
       expect(html).toContain('role="status"');
     },
   );
@@ -49,7 +51,31 @@ describe("card editing controls", () => {
       />,
     );
     expect(html).not.toContain('class="field-save');
+    expect(html).not.toContain("has-save-control");
   });
+  it.each([false, true])(
+    "releases the reserved space when the value is saved (description=%s)",
+    (multiline) => {
+      const props = {
+        label: multiline ? "Beschreibung" : "Titel",
+        multiline,
+        value: "Updated text",
+        onChange: () => {},
+        onSave: async () => true,
+        maxLength: multiline ? 20000 : 180,
+      };
+      const dirty = renderToStaticMarkup(
+        <CardTextField {...props} savedValue="Original text" />,
+      );
+      const saved = renderToStaticMarkup(
+        <CardTextField {...props} savedValue="Updated text" />,
+      );
+      expect(dirty).toContain("has-save-control");
+      expect(saved).not.toContain("has-save-control");
+      expect(saved).not.toContain('class="field-save');
+      expect(saved).toContain("Updated text");
+    },
+  );
   it("keeps the undo offer compact and exposes expansion accessibly", () => {
     const offer = {
       id: "s",
