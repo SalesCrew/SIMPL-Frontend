@@ -53,7 +53,7 @@
   color: #fff;
   background: #31543e;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   box-shadow: 0 2px 5px #244c3020;
   transition:
     background 0.16s,
@@ -146,7 +146,7 @@
 }
 .undo-toast-copy strong {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 .undo-toast-copy small {
   font-size: 10px;
@@ -177,7 +177,7 @@
   border-radius: 9px;
   color: #36513b;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   padding: 9px;
   margin-top: 12px;
   transition: background 0.16s;

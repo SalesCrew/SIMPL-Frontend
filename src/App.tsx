@@ -351,12 +351,14 @@ export default function App() {
   const boardHeading = (
     <section className="board-heading">
       <div>
-        <div className="eyebrow">
-          <span className="live-dot" />
-          {view === "team"
-            ? "GUTE ARBEIT IST TEAMARBEIT"
-            : "ALLES AN EINEM ORT"}
-        </div>
+        {view === "team" ? (
+          <div className="eyebrow">
+            <span className="live-dot" />
+            GUTE ARBEIT IST TEAMARBEIT
+          </div>
+        ) : (
+          <div className="board-eyebrow-space" aria-hidden="true" />
+        )}
         <h1>
           {title}
           <span className="title-dot">.</span>
