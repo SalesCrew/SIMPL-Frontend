@@ -19,6 +19,7 @@ import { CardTextField } from "./ui/CardTextField";
 import { useCommentViewport } from "./useCommentViewport";
 import { CommentComposer } from "./CommentComposer";
 import { CommentAttachments } from "./CommentAttachments";
+import { Checklists } from "./Checklists";
 import {
   colors,
   colorNames,
@@ -327,6 +328,9 @@ export function CardEditor({
                 : undefined
             }
           />
+          {card?.due_at && <p className="form-hint">Fällig · <time dateTime={card.due_at}>{timestamp(card.due_at)}</time></p>}
+          {card?.checklists?.length ? <Checklists lists={card.checklists} disabled={busy}
+            save={(checklists) => mutate({ type: "card.update", id: card.id, patch: { checklists } })} /> : null}
           {card ? (
             <Attachments
               cardId={card.id}

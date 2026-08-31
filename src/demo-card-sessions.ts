@@ -16,6 +16,7 @@ const fields = [
   "description",
   "assignee_id",
   "label_ids",
+  "checklists",
   "column_id",
   "completed_at",
   "reviewed_at",

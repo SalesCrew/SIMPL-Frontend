@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import {
   LayoutGrid,
+  Archive,
   SquareCheck,
   Users,
   ChevronsUpDown,
@@ -31,6 +32,7 @@ import { BoardViewport } from "./components/BoardViewport";
 import { BrandLogo } from "./components/BrandLogo";
 import { NotificationBell } from "./components/NotificationBell";
 import { InitialPassword } from "./components/InitialPassword";
+import { ArchiveList, ArchivedCard } from "./components/Archive";
 import type { CardEditSession } from "./card-edit-session";
 import { CardUndoToast } from "./components/CardUndoToast";
 import "./card-editing.css";
@@ -148,7 +150,7 @@ function Login() {
 }
 export default function App() {
   const w = useWorkspace();
-  const [view, setView] = useState<"board" | "mine" | "done" | "team">("board");
+  const [view, setView] = useState<"board" | "mine" | "done" | "team" | "archive">("board");
   const [workspaceEditor, setWorkspaceEditor] = useState<{
     workspace?: Workspace;
   } | null>(null);
@@ -171,7 +173,7 @@ export default function App() {
     session?: CardEditSession;
   } | null>(null);
   const openCard = (id: string) =>
-    setCardEditor({ id, session: w.beginCardEdit(id) });
+    setCardEditor({ id, session: w.state?.cards.find((card) => card.id === id)?.archived_at ? undefined : w.beginCardEdit(id) });
   useEffect(() => {
     const session = cardEditor?.session;
     return () => session?.close();
@@ -297,6 +299,7 @@ export default function App() {
   const admin = current.role === "admin";
   const cards = state.cards.filter(
     (c) =>
+      (view === "archive" ? !!c.archived_at : !c.archived_at) &&
       (!projectFilter || c.project_id === projectFilter) &&
       (!search ||
         `${c.title} ${c.description}`
@@ -321,7 +324,9 @@ export default function App() {
     .filter((n) => n.recipient_id === current.id && !n.seen_at)
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
   const title =
-    view === "mine"
+    view === "archive"
+      ? "Archiv"
+      : view === "mine"
       ? "Meine Karten"
       : view === "done"
         ? "Erledigt"
@@ -431,7 +436,7 @@ export default function App() {
                 onClick={() => navigate("board")}
               >
                 <LayoutGrid />
-                Taskboard<span className="nav-count">{state.cards.length}</span>
+                Taskboard<span className="nav-count">{state.cards.filter((card) => !card.archived_at).length}</span>
               </button>
               <button
                 aria-label="Meine Karten"
@@ -448,6 +453,9 @@ export default function App() {
               >
                 <CheckCheck />
                 Erledigt
+              </button>
+              <button aria-label="Archiv" className={`nav-item ${view === "archive" ? "active" : ""}`} onClick={() => navigate("archive")}>
+                <Archive />Archiv
               </button>
             </nav>
             <span className="section-label project-caption">
@@ -477,7 +485,7 @@ export default function App() {
                     <span className="subtle-count">
                       {
                         state.cards.filter(
-                          (t) => t.project_id === c.id && !t.completed_at,
+                          (t) => t.project_id === c.id && !t.completed_at && !t.archived_at,
                         ).length
                       }
                     </span>
@@ -931,7 +939,7 @@ export default function App() {
                   Keine Karten gefunden. Passe die Suche oder deine Filter an.
                 </div>
               )}
-              <Board
+              {view === "archive" ? <ArchiveList cards={cards} state={state} open={openCard} /> : <Board
                 {...{ state, current, mutate, busy }}
                 visible={cards}
                 open={openCard}
@@ -940,7 +948,7 @@ export default function App() {
                   if (!column || column.kind === "project")
                     setColumnEditor({ column });
                 }}
-              />
+              />}
             </BoardViewport>
           )}
           <footer className="board-status">
@@ -971,7 +979,8 @@ export default function App() {
             </button>
           </div>
         )}
-        {cardEditor && (!cardEditor.id || editedCard) && (
+        {cardEditor && editedCard?.archived_at && <ArchivedCard card={editedCard} state={state} close={() => setCardEditor(null)} />}
+        {cardEditor && !editedCard?.archived_at && (!cardEditor.id || editedCard) && (
           <CardEditor
             key={cardEditor.id || "new"}
             {...editorProps}

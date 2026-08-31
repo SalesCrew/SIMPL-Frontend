@@ -82,6 +82,14 @@ export interface Card {
   label_ids: string[];
   edit_revision?: number;
   deleted_at?: string | null;
+  archived_at?: string | null;
+  due_at?: string | null;
+  checklists?: Checklist[];
+}
+export interface Checklist {
+  id: string;
+  name: string;
+  items: { id: string; name: string; completed: boolean }[];
 }
 export interface Comment {
   id: string;

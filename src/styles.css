@@ -4026,3 +4026,32 @@ textarea {
     transition: none !important;
   }
 }
+.card-checklists { display: grid; gap: 24px; }
+.card-checklists:empty { display: none; }
+.card-checklist h3 { display: flex; justify-content: space-between; gap: 12px; margin: 0 0 10px; font-size: 14px; }
+.card-checklist h3 span { color: var(--muted); font-size: 12px; font-weight: var(--font-weight-regular); }
+.card-checklist progress { appearance: none; width: 100%; height: 4px; border: 0; border-radius: 4px; overflow: hidden; margin-bottom: 10px; background: #eef2e9; }
+.card-checklist progress::-webkit-progress-bar { background: #eef2e9; }
+.card-checklist progress::-webkit-progress-value { background: #89a578; }
+.card-checklist progress::-moz-progress-bar { background: #89a578; }
+.checklist-item { display: flex; align-items: flex-start; gap: 10px; width: 100%; padding: 9px 4px; border: 0; background: transparent; text-align: left; font: inherit; line-height: 1.5; color: inherit; border-radius: 8px; }
+.checklist-item:not(:disabled):hover { background: #f4f7f0; }
+.checklist-item:disabled { opacity: 1; cursor: default; }
+.checklist-box { display: grid; place-items: center; flex: 0 0 17px; width: 17px; height: 17px; margin-top: 2px; border: 1px solid #bccbb2; border-radius: 5px; }
+.checklist-item.complete .checklist-box { color: #fff; background: #567747; border-color: #567747; }
+.checklist-item.complete > span:last-child { color: #82917a; text-decoration: line-through; }
+.archive-list { display: grid; gap: 10px; padding: 0 40px 32px; }
+.archive-row { display: flex; gap: 16px; align-items: center; width: 100%; padding: 20px; border: 1px solid #e4ebdf; border-radius: 16px; background: #fff; text-align: left; color: inherit; }
+.archive-row:hover { border-color: #a6bb99; box-shadow: 0 4px 14px #304f3f08; }
+.archive-row > span:first-of-type { display: grid; gap: 7px; min-width: 0; }
+.archive-row b { overflow-wrap: anywhere; }
+.archive-row small, .archive-row-meta, .archive-empty { color: #809078; }
+.archive-row-meta { margin-left: auto; display: flex; gap: 12px; flex-shrink: 0; }
+.archive-row-meta > span { display: flex; align-items: center; gap: 4px; }
+.archive-notice { display: flex; gap: 10px; align-items: flex-start; padding: 14px; border-radius: 12px; background: #f0f4eb; font-size: 13px; }
+.archive-notice svg { flex-shrink: 0; }
+.archive-description { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; }
+.archived-detail .detail-main { display: grid; align-content: start; gap: 24px; }
+.archived-detail .detail-main h3 { font-size: 14px; }
+.archived-detail .comments-panel { height: 100%; }
+@media (max-width: 700px) { .archive-list { padding: 0 16px 24px; } .archive-row { padding: 15px; gap: 10px; } }

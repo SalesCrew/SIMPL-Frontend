@@ -25,7 +25,7 @@ export type Action =
       type: "card.update";
       id: string;
       patch: Partial<
-        Pick<Card, "title" | "description" | "assignee_id" | "label_ids">
+        Pick<Card, "title" | "description" | "assignee_id" | "label_ids" | "checklists">
       >;
     }
   | {
@@ -58,7 +58,7 @@ export type Action =
 
 export function orderedCards(state: BoardState, columnId: string) {
   return state.cards
-    .filter((c) => c.column_id === columnId)
+    .filter((c) => c.column_id === columnId && !c.archived_at)
     .sort((a, b) => a.position - b.position || a.id.localeCompare(b.id));
 }
 export function orderedColumns(columns: Column[]) {

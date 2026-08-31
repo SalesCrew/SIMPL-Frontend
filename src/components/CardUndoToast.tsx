@@ -19,6 +19,7 @@ const names: Record<string, string> = {
   description: "Beschreibung",
   assignee_id: "Zuständig",
   label_ids: "Labels",
+  checklists: "Checklisten",
   column_id: "Spalte",
   completed_at: "Status",
   reviewed_at: "Gelesen",
@@ -119,6 +120,10 @@ export function CardUndoToast({
     };
   }, [offer.id, paused, phase, exiting]);
   const display = (field: string, value: unknown): string => {
+    if (field === "checklists" && Array.isArray(value)) {
+      const items = value.flatMap((list) => list.items || []);
+      return `${items.filter((item) => item.completed).length}/${items.length} erledigt`;
+    }
     if (field === "deleted_at") return value ? "Gelöscht" : "Vorhanden";
     if (field === "completed_at") return value ? "Fertig" : "Offen";
     if (field === "reviewed_at")
