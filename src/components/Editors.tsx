@@ -38,6 +38,12 @@ import {
 } from "../types";
 import { orderedColumns, type Action } from "../domain";
 import { cardReadLabel } from "../card-review";
+
+const descriptionPlaceholders = [
+  "Ein bisschen Kontext macht Zusammenarbeit leichter …",
+  "Wusstest du? So wird daraus automatisch eine Checkliste:\n- Angebot prüfen\n- Freigabe einholen",
+] as const;
+
 type EditorProps = {
   state: BoardState;
   current: Profile;
@@ -322,6 +328,7 @@ export function CardEditor({
             maxLength={20000}
             disabled={busy}
             placeholder="Ein bisschen Kontext macht Zusammenarbeit leichter …"
+            placeholderSequence={descriptionPlaceholders}
             onSave={
               card
                 ? (value) =>

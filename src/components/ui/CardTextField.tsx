@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, LoaderCircle, Save } from "lucide-react";
+import { useTypewriterPlaceholder } from "./useTypewriterPlaceholder";
 
 export function CardTextField({
   label,
@@ -11,6 +12,7 @@ export function CardTextField({
   disabled = false,
   maxLength,
   placeholder,
+  placeholderSequence,
   autoFocus = false,
 }: {
   label: string;
@@ -22,6 +24,7 @@ export function CardTextField({
   disabled?: boolean;
   maxLength: number;
   placeholder?: string;
+  placeholderSequence?: readonly string[];
   autoFocus?: boolean;
 }) {
   const [phase, setPhase] = useState<"idle" | "saving" | "saved">("idle");
@@ -31,6 +34,10 @@ export function CardTextField({
   const success = phase === "saved" && value === savedText.current;
   const showSaveControl = Boolean(dirty || phase === "saving" || success);
   const textarea = useRef<HTMLTextAreaElement | null>(null);
+  const animatedPlaceholder = useTypewriterPlaceholder(
+    placeholderSequence,
+    multiline && !value,
+  );
   const fit = useCallback((node: HTMLTextAreaElement | null) => {
     textarea.current = node;
     if (node) {
@@ -69,7 +76,7 @@ export function CardTextField({
             rows={4}
             maxLength={maxLength}
             value={value}
-            placeholder={placeholder}
+            placeholder={animatedPlaceholder || placeholder}
             onChange={(e) => onChange(e.target.value)}
           />
         ) : (
