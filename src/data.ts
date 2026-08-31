@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Action } from "./domain";
-import type { BoardState, Profile, Workspace, AccessRevision } from "./types";
+import type { BoardState, Profile, Workspace, AccessRevision, Card } from "./types";
+import type { CardMove } from "./optimistic-card-moves";
 
 const url = import.meta.env.VITE_SUPABASE_URL;
 const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -16,7 +17,7 @@ export const supabase: SupabaseClient | null =
       })
     : null;
 
-export async function apiRequest(path: string, method: string, body?: unknown) {
+export async function apiRequest(path: string, method: string, body?: unknown, keepalive = false) {
   const session = (await supabase!.auth.getSession()).data.session;
   if (!session) throw new Error("Bitte erneut anmelden.");
   const response = await fetch(
@@ -28,6 +29,7 @@ export async function apiRequest(path: string, method: string, body?: unknown) {
         "Content-Type": "application/json",
       },
       body: body === undefined ? undefined : JSON.stringify(body),
+      keepalive,
       signal: AbortSignal.timeout(60000),
     },
   );
@@ -36,6 +38,18 @@ export async function apiRequest(path: string, method: string, body?: unknown) {
   if (!response.ok)
     throw new Error(json.error || "Die Anfrage ist fehlgeschlagen.");
   return json;
+}
+
+export async function moveCardRemote(action: CardMove): Promise<Card[]> {
+  // Only this tiny JSON request uses keepalive, never file uploads. Once received,
+  // the long-running backend owns the transaction independently of this page.
+  const result = await apiRequest(`/cards/${action.id}/move`, "POST", {
+    column_id: action.column_id,
+    before_id: action.before_id || null,
+  }, true);
+  if (!Array.isArray(result?.cards) || !result.cards.some((card: Card) => card.id === action.id))
+    throw new Error("Verschieben konnte nicht bestätigt werden. Bitte Verbindung prüfen.");
+  return result.cards;
 }
 
 async function allRows(table: string) {
@@ -170,12 +184,8 @@ export async function runRemote(action: Action) {
         .single();
       break;
     case "card.move":
-      result = await db.rpc("move_card", {
-        p_card: action.id,
-        p_column: action.column_id,
-        p_before: action.before_id || null,
-      });
-      break;
+      await moveCardRemote(action);
+      return;
     case "card.complete":
       result = await db.rpc("set_card_completed", {
         p_card: action.id,

@@ -74,6 +74,7 @@ function CardFace({
   open,
   mutate,
   busy,
+  moving = false,
   overlay = false,
 }: {
   card: Card;
@@ -82,6 +83,7 @@ function CardFace({
   open: (id: string) => void;
   mutate: (a: Action) => Promise<boolean>;
   busy: boolean;
+  moving?: boolean;
   overlay?: boolean;
 }) {
   const {
@@ -95,7 +97,7 @@ function CardFace({
   } = useSortable({
     id: card.id,
     data: { type: "card", column: card.column_id },
-    disabled: busy || overlay,
+    disabled: busy || moving || overlay,
   });
   const count = state.comments.filter((c) => c.card_id === card.id).length;
   const attachments = state.attachments.filter(
@@ -138,7 +140,7 @@ function CardFace({
         className="drag-handle"
         {...attributes}
         onKeyDown={(event) => listeners?.onKeyDown?.(event)}
-        disabled={busy || overlay}
+        disabled={busy || moving || overlay}
         aria-label={`${card.title} verschieben`}
       >
         <GripVertical size={14} />
@@ -235,6 +237,7 @@ function BoardColumn({
   create,
   edit,
   busy,
+  movingCardIds,
 }: {
   column: Column;
   cards: Card[];
@@ -245,6 +248,7 @@ function BoardColumn({
   create: () => void;
   edit: () => void;
   busy: boolean;
+  movingCardIds?: ReadonlySet<string>;
 }) {
   const { setNodeRef, isOver, over } = useDroppable({
     id: column.id,
@@ -300,6 +304,7 @@ function BoardColumn({
             <CardFace
               key={card.id}
               {...{ card, state, current, open, mutate, busy }}
+              moving={movingCardIds?.has(card.id)}
             />
           ))}
         </div>
@@ -353,6 +358,7 @@ export function Board({
   editColumn,
   mutate,
   busy,
+  movingCardIds,
 }: {
   state: BoardState;
   current: Profile;
@@ -362,6 +368,7 @@ export function Board({
   editColumn: (column?: Column) => void;
   mutate: (a: Action) => Promise<boolean>;
   busy: boolean;
+  movingCardIds?: ReadonlySet<string>;
 }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const sensors = useSensors(
@@ -377,6 +384,7 @@ export function Board({
     setActiveId(null);
     if (!event.over || event.active.id === event.over.id) return;
     const active = state.cards.find((c) => c.id === event.active.id);
+    if (active && movingCardIds?.has(active.id)) return;
     const overCard = state.cards.find((c) => c.id === event.over!.id);
     const column =
       overCard?.column_id ||
@@ -419,7 +427,7 @@ export function Board({
           {orderedColumns(state.columns).map((column) => (
             <BoardColumn
               key={column.id}
-              {...{ column, state, current, open, mutate, busy }}
+              {...{ column, state, current, open, mutate, busy, movingCardIds }}
               cards={visible
                 .filter((c) => c.column_id === column.id)
                 .sort(

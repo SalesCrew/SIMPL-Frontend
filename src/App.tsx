@@ -961,6 +961,7 @@ export default function App() {
               )}
               {view === "archive" ? <ArchiveList cards={cards} state={state} open={openCard} filtered={filtersActive} reset={resetFilters} /> : <Board
                 {...{ state, current, mutate, busy }}
+                movingCardIds={w.movingCardIds}
                 visible={cards}
                 open={openCard}
                 create={(column) => setCardEditor({ column })}

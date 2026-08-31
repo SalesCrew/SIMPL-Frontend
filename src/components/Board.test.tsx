@@ -90,6 +90,18 @@ it("removes the drag preview immediately instead of animating a duplicate back",
   expect(drag.dropAnimation).toBeNull();
 });
 
+it("keeps the board interactive while only preventing a conflicting second drag of the saving card", () => {
+  const state = createSeed();
+  const html = renderToStaticMarkup(<TooltipProvider><Board state={state} current={state.profiles[0]}
+    visible={state.cards} open={() => {}} create={() => {}} editColumn={() => {}} mutate={async () => true}
+    busy={false} movingCardIds={new Set(["c1"])} /></TooltipProvider>);
+  const handles = [...html.matchAll(/<button[^>]*class="drag-handle"[^>]*>/g)].map(([button]) => button);
+  expect(handles.filter((button) => button.includes('disabled=""'))).toHaveLength(1);
+  const checks = [...html.matchAll(/<button[^>]*class="(?:read-check|status-check)[^>]*>/g)];
+  expect(checks.every(([button]) => !button.includes('disabled=""'))).toBe(true);
+  expect(html).not.toContain('aria-busy="true"');
+});
+
 describe("Board column drag highlight", () => {
   it("does not highlight any column when nothing is being dragged", () => {
     expect(highlightedColumns()).toEqual([]);

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import {
   applyDemoAction,
@@ -7,7 +7,8 @@ import {
   visibleBoardForActor,
   type Action,
 } from "./domain";
-import { accountAccess, apiRequest, demoMode, loadBoard, runRemote, supabase } from "./data";
+import { accountAccess, apiRequest, demoMode, loadBoard, moveCardRemote, runRemote, supabase } from "./data";
+import { mergeMoveReceipt, projectCardMoves, sameMoveAccess, type CardMove, type PendingCardMove } from "./optimistic-card-moves";
 import { createSeed } from "./seed";
 import type { BoardState } from "./types";
 import { removeLocalBlob } from "./attachments";
@@ -46,6 +47,15 @@ export function useWorkspace() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [connected, setConnected] = useState(false);
+  const [pendingMoves, setPendingMoves] = useState<PendingCardMove[]>([]);
+  const moveFlights = useRef(new Map<string, Promise<boolean>>());
+  const moveEpoch = useRef(0);
+  const clearBoard = useCallback(() => {
+    ++moveEpoch.current;
+    stateRef.current = null;
+    setState(null);
+    setPendingMoves([]);
+  }, []);
   const requestVersion = useRef(0);
   const mutationQueue = useRef<Promise<unknown>>(Promise.resolve());
   const editQueues = useRef(new Map<string, Promise<EditReceipt>>());
@@ -64,8 +74,13 @@ export function useWorkspace() {
     mutationQueue.current = result.catch(() => {});
     return result;
   }
-  const visibleState =
-    demoMode && current && state ? visibleBoardForActor(state, current) : state;
+  const projectedState = useMemo(() => state && current
+    ? projectCardMoves(state, current, pendingMoves) : state, [state, current, pendingMoves]);
+  const visibleState = demoMode && current && projectedState
+    ? visibleBoardForActor(projectedState, current) : projectedState;
+  const movingCardIds = useMemo(() => new Set(pendingMoves
+    .filter((move) => sameMoveAccess(move, state, current?.id)).map((move) => move.action.id)),
+  [pendingMoves, state, current?.id]);
   const activeWorkspaceId =
     current && state
       ? selection?.userId === current.id &&
@@ -85,8 +100,7 @@ export function useWorkspace() {
         : access.security.password_change_required ? "required" : "reauthenticate";
       setPasswordGate(gate);
       if (!access.ready) {
-        stateRef.current = null;
-        setState(null);
+        clearBoard();
         setError("");
         return;
       }
@@ -99,25 +113,24 @@ export function useWorkspace() {
             revision.id !== previous.id ||
             revision.authorization_version !== previous.authorization_version)
         ) {
-          stateRef.current = null;
-          setState(null);
+          clearBoard();
         }
       });
       if (version === requestVersion.current) {
+        stateRef.current = next;
         setState(next);
         setError("");
       }
     } catch {
       if (version === requestVersion.current) {
         setPasswordGate("checking");
-        stateRef.current = null;
-        setState(null);
+        clearBoard();
         setError(
           "Zugriffsrechte konnten nicht geprüft werden. Bitte Verbindung prüfen und erneut versuchen.",
         );
       }
     }
-  }, []);
+  }, [clearBoard]);
   useEffect(() => {
     if (demoMode || !supabase) return;
     let alive = true;
@@ -125,8 +138,7 @@ export function useWorkspace() {
       if (sessionUserId.current !== (next?.id || null)) {
         sessionUserId.current = next?.id || null;
         ++requestVersion.current;
-        stateRef.current = null;
-        setState(null);
+        clearBoard();
         setSelection(null);
         setPasswordGate("checking");
       }
@@ -145,14 +157,14 @@ export function useWorkspace() {
       if (!session) {
         setSelection(null);
         ++requestVersion.current;
-        setState(null);
+        clearBoard();
       }
     });
     return () => {
       alive = false;
       data.subscription.unsubscribe();
     };
-  }, []);
+  }, [clearBoard]);
   useEffect(() => {
     if (!user || demoMode || !supabase) return;
     void refresh();
@@ -179,8 +191,7 @@ export function useWorkspace() {
             revision.authorization_version !== previous.authorization_version
           ) {
             ++requestVersion.current;
-            stateRef.current = null;
-            setState(null);
+            clearBoard();
           }
           clearTimeout(timer);
           timer = setTimeout(() => void refresh(), 180);
@@ -222,7 +233,7 @@ export function useWorkspace() {
       void supabase!.removeChannel(channel);
       setConnected(false);
     };
-  }, [user?.id, refresh, passwordGate]);
+  }, [user?.id, refresh, passwordGate, clearBoard]);
   useEffect(() => {
     if (!demoMode) return;
     const sync = (event: StorageEvent) => {
@@ -231,13 +242,64 @@ export function useWorkspace() {
     window.addEventListener("storage", sync);
     return () => window.removeEventListener("storage", sync);
   }, []);
-  const mutate = (action: Action): Promise<boolean> =>
+  const moveCard = (action: CardMove): Promise<boolean> => {
+    const previous = moveFlights.current.get(action.id);
+    if (previous) return previous;
+    if (!current || current.id !== actorId.current || !stateRef.current || busy)
+      return Promise.resolve(false);
+    const move: PendingCardMove = { action, actorId: current.id,
+      authorizationVersion: stateRef.current.access_revision?.authorization_version,
+      startedAt: new Date().toISOString() };
+    const epoch = moveEpoch.current;
+    const card = stateRef.current.cards.find((c) => c.id === action.id);
+    if (!card || card.archived_at || card.deleted_at) return Promise.resolve(false);
+    try {
+      // Validate before exposing the optimistic result; the server still enforces RLS.
+      projectCardMoves(stateRef.current, current, [move]);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Karte kann nicht verschoben werden.");
+      return Promise.resolve(false);
+    }
+    setError("");
+    setPendingMoves((all) => [...all, move]);
+    // Start outside the generic mutation queue. No global busy state and no board
+    // reload between dropping the card and displaying its final location.
+    const saving = (async () => {
+      try {
+        const cards = await moveCardRemote(action);
+        if (epoch === moveEpoch.current && sameMoveAccess(move, stateRef.current, actorId.current)) {
+          ++requestVersion.current; // Invalidate snapshots begun before this commit.
+          const next = mergeMoveReceipt(stateRef.current!, cards);
+          stateRef.current = next;
+          setState(next);
+        }
+        return true;
+      } catch {
+        if (epoch === moveEpoch.current && sameMoveAccess(move, stateRef.current, actorId.current)) {
+          setError("Verschieben konnte nicht bestätigt werden. Die Karte wird mit dem Server abgeglichen.");
+          // A network failure is ambiguous: the server may already have committed.
+          // Remove only this overlay, then reconcile instead of retrying the move.
+          void refresh();
+        }
+        return false;
+      } finally {
+        setPendingMoves((all) => all.filter((entry) => entry !== move));
+        moveFlights.current.delete(action.id);
+      }
+    })();
+    moveFlights.current.set(action.id, saving);
+    return saving;
+  };
+  const mutateQueued = (action: Action): Promise<boolean> =>
     enqueue(async () => {
       if (!current || !stateRef.current || current.id !== actorId.current)
         return false;
       setBusy(true);
       setError("");
       try {
+        // Completion, deletion and undo must observe the accepted drag first.
+        await Promise.all(moveFlights.current.values());
+        if (!stateRef.current || current.id !== actorId.current) return false;
         if (demoMode) {
           const latest = stateRef.current!;
           const next = applyDemoAction(latest, current, action);
@@ -268,7 +330,11 @@ export function useWorkspace() {
         setBusy(false);
       }
     });
+  const mutate = (action: Action): Promise<boolean> => !demoMode && action.type === "card.move"
+    ? moveCard(action) : mutateQueued(action);
   const performEdit: EditTransport = async (id, operation, cardId, action) => {
+    // Capture edit snapshots only after a preceding drag has settled.
+    await moveFlights.current.get(cardId);
     if (!current || current.id !== actorId.current || !stateRef.current)
       throw new Error("Die Anmeldung oder Zugriffsrechte haben sich geändert.");
     const changing = operation === "mutate" || operation === "undo";
@@ -365,6 +431,7 @@ export function useWorkspace() {
     error,
     setError,
     busy,
+    movingCardIds,
     connected,
     refresh,
     mutate,
