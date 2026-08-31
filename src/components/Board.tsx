@@ -32,6 +32,7 @@ import {
 import { orderedCards, orderedColumns, type Action } from "../domain";
 import { boardCollisionDetection, boardKeyboardCoordinates } from "../board-dnd";
 import { Tooltip } from "./ui/Tooltip";
+import { cardReadLabel } from "../card-review";
 import {
   initials,
   type BoardState,
@@ -182,16 +183,10 @@ function CardFace({
             {card.completed_at && <Check size={12} />}
           </button>
         </Tooltip>
-        <Tooltip
-          content={
-            card.reviewed_at
-              ? `Wahrgenommen von ${state.profiles.find((p) => p.id === card.reviewed_by)?.name || "einem Mitglied"}`
-              : "Noch nicht wahrgenommen"
-          }
-        >
+        <Tooltip content={cardReadLabel(card, state.profiles)}>
           <button
             className={`read-check ${card.reviewed_at ? "is-read" : ""}`}
-            aria-label={`${card.title}: ${card.reviewed_at ? "Wahrgenommen-Markierung entfernen" : "als wahrgenommen markieren"}`}
+            aria-label={`${card.title}: ${card.reviewed_at ? `${cardReadLabel(card, state.profiles)}. Gelesen-Markierung entfernen` : "als gelesen markieren"}`}
             aria-pressed={!!card.reviewed_at}
             disabled={busy}
             onClick={() =>

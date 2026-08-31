@@ -1902,6 +1902,7 @@ textarea {
 }
 .detail-status {
   display: flex;
+  flex-wrap: wrap;
   gap: 18px;
   padding-top: 8px;
   font-size: 11px;
@@ -1912,6 +1913,15 @@ textarea {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+.detail-status button {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+.detail-status svg {
+  flex-shrink: 0;
 }
 .green-text {
   color: #6b9056;

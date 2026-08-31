@@ -77,7 +77,10 @@ it.each([0, 2])("enables card acknowledgement on the board for every role (profi
     expect(buttons).toHaveLength(state.cards.length);
     for (const [button] of buttons) {
       expect(button.includes('disabled=""')).toBe(busy);
-      expect(button).toMatch(/wahrgenommen|Wahrgenommen/);
+      expect(button).toMatch(/gelesen|Gelesen/);
+      if (button.includes('aria-pressed="true"')) {
+        expect(button).toContain("Von Kilian gelesen. Gelesen-Markierung entfernen");
+      }
     }
   }
 });

@@ -55,16 +55,45 @@ describe("CardEditor creation header", () => {
     const { state, card } = fixture();
     for (const reviewed of [false, true]) {
       card.reviewed_at = reviewed ? card.created_at : null;
+      card.reviewed_by = reviewed ? "ben" : null;
       const html = renderEditor(state, card, index);
-      const button = html.match(/<button[^>]*aria-label="(?:Wahrgenommen-Markierung entfernen|Karte als wahrgenommen markieren)"[^>]*>[\s\S]*?<\/button>/)?.[0];
+      const button = html.match(/<button[^>]*aria-label="(?:Von [^"]+ gelesen\. Gelesen-Markierung entfernen|Karte als gelesen markieren)"[^>]*>[\s\S]*?<\/button>/)?.[0];
       expect(button).toBeTruthy();
       expect(button).not.toContain("disabled");
       expect(button).toContain(`aria-pressed="${reviewed}"`);
-      expect(button).toContain(reviewed ? "Karte wurde wahrgenommen" : "Noch nicht wahrgenommen");
+      expect(button).toContain(reviewed ? "Von Ben Wagner gelesen" : "Noch nicht gelesen");
       expect(html).not.toContain("Vom Admin gelesen");
       const pending = renderEditor(state, card, index, true);
-      expect(pending).toMatch(/<button[^>]*disabled=""[^>]*aria-label="(?:Wahrgenommen-Markierung entfernen|Karte als wahrgenommen markieren)"/);
+      expect(pending).toMatch(/<button[^>]*disabled=""[^>]*aria-label="(?:Von [^"]+ gelesen\. Gelesen-Markierung entfernen|Karte als gelesen markieren)"/);
     }
+  });
+  it("uses the saved reader, not the creator, assignee or current viewer", () => {
+    const { state, card } = fixture();
+    card.reviewed_at = card.created_at;
+    card.reviewed_by = "ben";
+    state.profiles.find((profile) => profile.id === "ben")!.active = false;
+    const html = renderEditor(state, card);
+    expect(html).toContain("Von Ben Wagner gelesen");
+    expect(html).not.toContain("Von Kilian gelesen");
+    expect(html).not.toContain("Von Anna Leitner gelesen");
+    expect(html).not.toContain("Von David Lang gelesen");
+  });
+
+  it("does not invent a reader when their profile is unavailable", () => {
+    const { state, card } = fixture();
+    card.reviewed_at = card.created_at;
+    card.reviewed_by = "missing-profile";
+    expect(renderEditor(state, card)).toContain("Von einem Mitglied gelesen");
+  });
+
+  it("renders reader names safely as text", () => {
+    const { state, card } = fixture();
+    card.reviewed_at = card.created_at;
+    card.reviewed_by = "ben";
+    state.profiles.find((profile) => profile.id === "ben")!.name = "<img src=x>";
+    const html = renderEditor(state, card);
+    expect(html).toContain("Von &lt;img src=x&gt; gelesen");
+    expect(html).not.toContain("<img src=x>");
   });
   it("shows the card title and creator with the original date and time in the header", () => {
     const { state, card } = fixture();

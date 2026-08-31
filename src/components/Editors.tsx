@@ -31,6 +31,7 @@ import {
   type Profile,
 } from "../types";
 import { orderedColumns, type Action } from "../domain";
+import { cardReadLabel } from "../card-review";
 type EditorProps = {
   state: BoardState;
   current: Profile;
@@ -373,8 +374,8 @@ export function CardEditor({
                 aria-pressed={!!card.reviewed_at}
                 aria-label={
                   card.reviewed_at
-                    ? "Wahrgenommen-Markierung entfernen"
-                    : "Karte als wahrgenommen markieren"
+                    ? `${cardReadLabel(card, state.profiles)}. Gelesen-Markierung entfernen`
+                    : "Karte als gelesen markieren"
                 }
                 onClick={() =>
                   void mutate({
@@ -385,9 +386,7 @@ export function CardEditor({
                 }
               >
                 <CheckCheck size={17} />
-                {card.reviewed_at
-                  ? "Karte wurde wahrgenommen"
-                  : "Noch nicht wahrgenommen"}
+                {cardReadLabel(card, state.profiles)}
               </button>
             </div>
           )}
