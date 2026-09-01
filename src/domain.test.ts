@@ -255,15 +255,69 @@ describe("Shared board behavior", () => {
     expect(cleared.cards[1].reviewed_at).toBeNull();
     expect(cleared.cards[1].reviewed_by).toBeNull();
   });
-  it("notifies creators, assignees and previous commenters once, excluding the actor", () => {
+  it("notifies every accessible workspace member once, excluding the actor", () => {
     const s = createSeed();
-    const next = applyDemoAction(s, s.profiles[0], {
+    const actor = s.profiles[0];
+    const next = applyDemoAction(s, actor, {
       type: "comment.create",
       card_id: "c1",
       body: "Ein Update",
     });
     const added = next.notifications.filter((n) => n.body === "Ein Update");
-    expect(added.map((n) => n.recipient_id).sort()).toEqual(["anna", "philip"]);
+    expect(added.map((n) => n.recipient_id).sort()).toEqual(
+      s.profiles
+        .filter((profile) => profile.active && profile.id !== actor.id)
+        .map((profile) => profile.id)
+        .sort(),
+    );
+    expect(added.every((n) => n.event_type === "comment.created")).toBe(true);
+  });
+  it("creates activity for card, movement, acknowledgement and file actions", () => {
+    const actor = createSeed().profiles[0];
+    let state = createSeed();
+    const baseline = new Set(state.notifications.map((item) => item.id));
+    state = applyDemoAction(state, actor, {
+      type: "card.update",
+      id: "c1",
+      patch: { description: "Aktualisiert" },
+    });
+    state = applyDemoAction(state, actor, {
+      type: "card.move",
+      id: "c1",
+      column_id: "rover",
+    });
+    const reviewed = !!state.cards.find((card) => card.id === "c1")?.reviewed_at;
+    state = applyDemoAction(state, actor, {
+      type: "card.review",
+      id: "c1",
+      reviewed: !reviewed,
+    });
+    const now = new Date().toISOString();
+    state = applyDemoAction(state, actor, {
+      type: "attachment.add",
+      attachment: {
+        id: "activity-file",
+        card_id: "c1",
+        uploaded_by: actor.id,
+        filename: "status.pdf",
+        mime_type: "application/pdf",
+        size_bytes: 100,
+        object_path: "c1/activity-file",
+        status: "ready",
+        created_at: now,
+        expires_at: now,
+      },
+    });
+    const activity = state.notifications.filter((item) => !baseline.has(item.id));
+    expect(new Set(activity.map((item) => item.event_type))).toEqual(
+      new Set([
+        "card.updated",
+        "card.moved",
+        reviewed ? "card.unreviewed" : "card.reviewed",
+        "attachment.added",
+      ]),
+    );
+    expect(activity.some((item) => item.recipient_id === actor.id)).toBe(false);
   });
   it("marks only the current recipient’s news as seen", () => {
     const s = createSeed();

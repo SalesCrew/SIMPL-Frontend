@@ -99,12 +99,30 @@ export interface Comment {
   created_at: string;
   attachment_ids?: string[];
 }
+export type NotificationEventType =
+  | "comment.created"
+  | "card.created"
+  | "card.updated"
+  | "card.moved"
+  | "card.completed"
+  | "card.reopened"
+  | "card.archived"
+  | "card.restored"
+  | "card.reviewed"
+  | "card.unreviewed"
+  | "card.deleted"
+  | "attachment.added"
+  | "attachment.removed";
 export interface Notification {
   id: string;
   recipient_id: string;
   actor_id: string;
-  card_id: string;
-  comment_id: string;
+  workspace_id: string;
+  card_id: string | null;
+  comment_id: string | null;
+  event_type: NotificationEventType;
+  subject: string;
+  event_key?: string;
   body: string;
   created_at: string;
   seen_at: string | null;

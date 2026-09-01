@@ -51,6 +51,7 @@ import { Select } from "./components/ui/Select";
 import { Tooltip, TooltipProvider } from "./components/ui/Tooltip";
 import { DocsPage, DocsSearchPopover } from "./components/Docs";
 import { timestamp, type Column, type Profile, type Workspace } from "./types";
+import { notificationAction } from "./notification-copy";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -298,7 +299,7 @@ export default function App() {
       (view !== "mine" || cardMatchesMember(c, current.id)) &&
       (view !== "done" || !!c.completed_at),
   );
-  const unread = state.notifications
+  const unread = allState.notifications
     .filter((n) => n.recipient_id === current.id && !n.seen_at)
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
   const title =
@@ -614,9 +615,10 @@ export default function App() {
                               const target = allState.cards.find(
                                 (c) => c.id === n.card_id,
                               );
-                              if (target)
-                                w.selectWorkspace(target.workspace_id);
-                              openCard(n.card_id);
+                              const workspaceId = n.workspace_id || target?.workspace_id;
+                              if (workspaceId) w.selectWorkspace(workspaceId);
+                              if (target) openCard(target.id);
+                              else navigate("board");
                               void mutate({
                                 type: "notifications.seen",
                                 id: n.id,
@@ -624,31 +626,24 @@ export default function App() {
                             }}
                           >
                             <Avatar
-                              profile={state.profiles.find(
+                              profile={allState.profiles.find(
                                 (p) => p.id === n.actor_id,
                               )}
                             />
                             <div>
                               <b>
                                 {
-                                  state.profiles.find(
+                                  allState.profiles.find(
                                     (p) => p.id === n.actor_id,
-                                  )?.name
+                                  )?.name || "Ein Teammitglied"
                                 }
                               </b>
-                              <span> hat kommentiert</span>
-                              <strong>
-                                {allState.cards.find((p) => p.id === n.card_id)
-                                  ?.title || "Karte"}
-                              </strong>
+                              <span> {notificationAction(n.event_type)}</span>
+                              <strong>{n.subject || "Karte"}</strong>
                               <small>
                                 {
                                   allState.workspaces.find(
-                                    (workspace) =>
-                                      workspace.id ===
-                                      allState.cards.find(
-                                        (card) => card.id === n.card_id,
-                                      )?.workspace_id,
+                                    (workspace) => workspace.id === n.workspace_id,
                                   )?.name
                                 }
                               </small>
@@ -669,7 +664,7 @@ export default function App() {
                       </span>
                       <b>Alles auf dem neuesten Stand.</b>
                       <p>
-                        Neue Kommentare zu deinen Karten
+                        Neue Karten, Kommentare und Änderungen
                         <br />
                         findest du hier.
                       </p>

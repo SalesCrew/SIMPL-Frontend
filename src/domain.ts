@@ -6,6 +6,7 @@ import type {
   Profile,
   Workspace,
   Attachment,
+  NotificationEventType,
 } from "./types";
 import { validateFile } from "./attachment-files";
 
@@ -106,6 +107,13 @@ export function restoreFixedBuckets(state: BoardState): BoardState {
   next.cards.forEach((c) => {
     c.workspace_id ||=
       next.columns.find((col) => col.id === c.column_id)?.workspace_id || first;
+  });
+  next.notifications ||= [];
+  next.notifications.forEach((notification) => {
+    const card = next.cards.find((item) => item.id === notification.card_id);
+    notification.workspace_id ||= card?.workspace_id || first;
+    notification.event_type ||= "comment.created";
+    notification.subject ||= card?.title || "Karte";
   });
   next.profiles.forEach((p) => {
     p.default_workspace_id ||=
@@ -211,7 +219,7 @@ export function visibleBoardForActor(
           actor.role === "admin"),
     ),
     notifications: state.notifications.filter(
-      (n) => n.recipient_id === actor.id && ids.has(n.card_id),
+      (n) => n.recipient_id === actor.id && allowed(n.workspace_id),
     ),
   };
 }
@@ -251,6 +259,38 @@ function returnLocation(state: BoardState, card: Card) {
           ? cards[card.return_index]?.id
           : undefined,
   };
+}
+function notifyWorkspaceActivity(
+  state: BoardState,
+  actor: Profile,
+  subject: Card,
+  eventType: NotificationEventType,
+  body: string,
+  references: { cardId?: string | null; commentId?: string | null } = {},
+) {
+  state.profiles
+    .filter(
+      (profile) =>
+        profile.active &&
+        profile.id !== actor.id &&
+        canAccessWorkspace(state, profile, subject.workspace_id),
+    )
+    .forEach((profile) =>
+      state.notifications.unshift({
+        id: crypto.randomUUID(),
+        recipient_id: profile.id,
+        actor_id: actor.id,
+        workspace_id: subject.workspace_id,
+        card_id: references.cardId === undefined ? subject.id : references.cardId,
+        comment_id: references.commentId || null,
+        event_type: eventType,
+        subject: subject.title,
+        event_key: `demo:${crypto.randomUUID()}`,
+        body,
+        created_at: new Date().toISOString(),
+        seen_at: null,
+      }),
+    );
 }
 export function applyDemoAction(
   original: BoardState,
@@ -379,7 +419,7 @@ export function applyDemoAction(
         throw new Error(
           "Projekt und Karte müssen zum gleichen Workspace gehören.",
         );
-      s.cards.push({
+      const created: Card = {
         id: action.id || crypto.randomUUID(),
         workspace_id: workspaceId,
         title: action.title.trim(),
@@ -400,7 +440,9 @@ export function applyDemoAction(
         reviewed_by: null,
         created_at: now,
         updated_at: now,
-      });
+      };
+      s.cards.push(created);
+      notifyWorkspaceActivity(s, actor, created, "card.created", "Neue Karte erstellt");
       break;
     }
     case "card.complete": {
@@ -424,9 +466,30 @@ export function applyDemoAction(
         ...(action.completed ? { column_id: done.id } : returnLocation(s, c)),
       });
     }
-    case "card.update":
-      Object.assign(card(action.id), action.patch, { updated_at: now });
+    case "card.update": {
+      const c = card(action.id);
+      const keys = Object.keys(action.patch) as (keyof typeof action.patch)[];
+      const changed = keys.filter(
+        (key) => JSON.stringify(c[key]) !== JSON.stringify(action.patch[key]),
+      );
+      if (!changed.length) break;
+      Object.assign(c, action.patch, { updated_at: now });
+      const labels: Record<string, string> = {
+        title: "Titel geändert",
+        description: "Beschreibung geändert",
+        assignee_id: "Zuweisung geändert",
+        label_ids: "Labels geändert",
+        checklists: "Checkliste geändert",
+      };
+      notifyWorkspaceActivity(
+        s,
+        actor,
+        c,
+        "card.updated",
+        changed.length === 1 ? labels[changed[0]] || "Karte aktualisiert" : "Karte aktualisiert",
+      );
       break;
+    }
     case "card.move": {
       const c = card(action.id);
       const target = s.columns.find((col) => col.id === action.column_id);
@@ -437,6 +500,7 @@ export function applyDemoAction(
         );
       if (action.before_id === action.id) break;
       const source = s.columns.find((col) => col.id === c.column_id);
+      const wasCompleted = !!c.completed_at;
       if (source?.kind === "project" && target.kind !== "project") {
         const siblings = orderedCards(s, source.id);
         const index = siblings.findIndex((sibling) => sibling.id === c.id);
@@ -453,24 +517,62 @@ export function applyDemoAction(
       if (target.kind === "project") c.project_id = target.id;
       c.completed_at = target.kind === "done" ? c.completed_at || now : null;
       c.updated_at = now;
+      const eventType: NotificationEventType =
+        target.kind === "done" && !wasCompleted
+          ? "card.completed"
+          : target.kind !== "done" && wasCompleted
+            ? "card.reopened"
+            : "card.moved";
+      notifyWorkspaceActivity(
+        s,
+        actor,
+        c,
+        eventType,
+        eventType === "card.completed"
+          ? "Als erledigt markiert"
+          : eventType === "card.reopened"
+            ? "Wieder geöffnet"
+            : source?.id === target.id
+              ? "Position geändert"
+              : `Nach ${target.name} verschoben`,
+      );
       break;
     }
     case "card.review": {
       const c = card(action.id);
+      if (!!c.reviewed_at === action.reviewed) break;
       c.reviewed_at = action.reviewed ? now : null;
       c.reviewed_by = action.reviewed ? actor.id : null;
+      notifyWorkspaceActivity(
+        s,
+        actor,
+        c,
+        action.reviewed ? "card.reviewed" : "card.unreviewed",
+        action.reviewed ? "Als wahrgenommen markiert" : "Wahrnehmung entfernt",
+      );
       break;
     }
-    case "card.delete":
-      card(action.id);
+    case "card.delete": {
+      const c = card(action.id);
+      const commentIds = new Set(
+        s.comments.filter((comment) => comment.card_id === action.id).map((comment) => comment.id),
+      );
       s.attachments = s.attachments.filter((a) => a.card_id !== action.id);
       s.cards = s.cards.filter((c) => c.id !== action.id);
       s.comments = s.comments.filter((c) => c.card_id !== action.id);
-      s.notifications = s.notifications.filter((n) => n.card_id !== action.id);
+      s.notifications.forEach((notification) => {
+        if (notification.card_id === action.id) notification.card_id = null;
+        if (notification.comment_id && commentIds.has(notification.comment_id))
+          notification.comment_id = null;
+      });
+      notifyWorkspaceActivity(s, actor, c, "card.deleted", "Karte gelöscht", {
+        cardId: null,
+      });
       break;
+    }
     case "attachment.add": {
       const a = action.attachment;
-      card(a.card_id);
+      const c = card(a.card_id);
       validateFile(a.filename, a.size_bytes);
       if (s.attachments.some((existing) => existing.id === a.id)) break;
       if (
@@ -483,12 +585,22 @@ export function applyDemoAction(
       )
         throw new Error("Pro Karte sind höchstens 20 Anhänge möglich.");
       s.attachments.push({ ...a, uploaded_by: actor.id, status: "ready" });
+      notifyWorkspaceActivity(s, actor, c, "attachment.added", `${a.filename} angehängt`);
       break;
     }
-    case "attachment.delete":
-      card(s.attachments.find((a) => a.id === action.id)?.card_id || "");
+    case "attachment.delete": {
+      const attachment = s.attachments.find((a) => a.id === action.id);
+      const c = card(attachment?.card_id || "");
       s.attachments = s.attachments.filter((a) => a.id !== action.id);
+      notifyWorkspaceActivity(
+        s,
+        actor,
+        c,
+        "attachment.removed",
+        `${attachment!.filename} entfernt`,
+      );
       break;
+    }
     case "comment.create": {
       const files = action.attachments || [];
       if (
@@ -522,11 +634,6 @@ export function applyDemoAction(
         created_at: now,
         attachment_ids: files.map((a) => a.id),
       };
-      const recipients = new Set([
-        c.created_by,
-        c.assignee_id,
-        ...s.comments.filter((m) => m.card_id === c.id).map((m) => m.author_id),
-      ]);
       s.comments.push(comment);
       s.attachments.push(
         ...files.map((a) => ({
@@ -535,27 +642,14 @@ export function applyDemoAction(
           comment_draft_id: null,
         })),
       );
-      recipients.forEach((id) => {
-        if (
-          id &&
-          id !== actor.id &&
-          s.profiles.some(
-            (p) => p.id === id && canAccessWorkspace(s, p, c.workspace_id),
-          )
-        )
-          s.notifications.unshift({
-            id: crypto.randomUUID(),
-            recipient_id: id,
-            actor_id: actor.id,
-            card_id: c.id,
-            comment_id: comment.id,
-            body:
-              comment.body ||
-              `${files.length} ${files.length === 1 ? "Datei" : "Dateien"} angehängt`,
-            created_at: now,
-            seen_at: null,
-          });
-      });
+      notifyWorkspaceActivity(
+        s,
+        actor,
+        c,
+        "comment.created",
+        comment.body || `${files.length} ${files.length === 1 ? "Datei" : "Dateien"} angehängt`,
+        { commentId: comment.id },
+      );
       break;
     }
     case "notifications.seen":

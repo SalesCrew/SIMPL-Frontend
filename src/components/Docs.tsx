@@ -99,7 +99,7 @@ export const faqGroups: FaqGroup[] = [
       ["Wie filtere ich nach einer Person?", "Wähle die Person im Mitgliederfilter. SIMPL zeigt Karten, die diese Person erstellt hat oder denen sie zugewiesen ist."],
       ["Wie funktioniert die Suche?", "Im Taskboard prüft die Suche Kartentitel und Beschreibungen im aktuellen Workspace. Auf der Docs-Seite findet dasselbe Feld passende Q&A-Antworten – auch wenn du deine Frage anders formulierst. Mit Strg + K beziehungsweise ⌘ K springst du direkt in das Suchfeld."],
       ["Was bedeutet der doppelte Haken?", "Damit markierst du, dass eine Karte wahrgenommen wurde. SIMPL speichert auch, wer diese Markierung gesetzt hat."],
-      ["Wann klingelt die Glocke?", "Wenn es neue Kommentare zu relevanten Karten gibt. Die Glocke wird gelb und bewegt sich; im Neuigkeiten-Fenster kannst du Einträge einzeln oder gesammelt als gesehen markieren."],
+      ["Wann klingelt die Glocke?", "Bei neuen Karten, Kommentaren, Dateien und Kartenänderungen in einem Workspace, auf den du Zugriff hast. Eigene Aktionen lösen keinen Hinweis für dich selbst aus. Die Glocke wird gelb und bewegt sich; im Neuigkeiten-Fenster kannst du Einträge einzeln oder gesammelt als gesehen markieren."],
       ["Wo finde ich alte Karten?", "Im „Archiv“. Archivierte Trello-Karten sind vollständig als erledigt markiert und nur zum Nachlesen verfügbar."],
       ["Warum kann ich eine archivierte Karte nicht bearbeiten?", "Das Archiv bewahrt den übernommenen Originalstand. Deshalb sind Karte, Kommentare, Dateien und Checklisten dort schreibgeschützt."],
       ["Woran erkenne ich, ob meine Änderung gespeichert ist?", "Unten links zeigt SIMPL den Verbindungs- und Speicherstatus. Nach Textänderungen bestätigst du mit „Speichern“; Auswahlen und Anhänge werden sofort gespeichert."],
@@ -266,7 +266,7 @@ export function DocsPage({ search = "", onSearchChange = ignoreSearch }: {
             <div className="docs-split">
               <div className="docs-panel"><MessageSquare /><h3>Kommentare</h3><p>Schreibe Fragen, Feedback oder Updates direkt in die Karte. <kbd>Enter</kbd> sendet, <kbd>Shift</kbd> + <kbd>Enter</kbd> beginnt eine neue Zeile.</p></div>
               <div className="docs-panel"><Paperclip /><h3>Dateien & Screenshots</h3><p>Ziehe Dateien hinein oder füge Screenshots aus der Zwischenablage ein. Alle Dateitypen sind erlaubt – bis zu 500 MB pro Datei.</p></div>
-              <div className="docs-panel"><Bell /><h3>Neuigkeiten</h3><p>Neue Kommentare erscheinen hinter der gelben Glocke. Von dort öffnest du direkt die betroffene Karte oder markierst alles als gesehen.</p></div>
+              <div className="docs-panel"><Bell /><h3>Neuigkeiten</h3><p>Neue Karten, Kommentare, Dateien und Änderungen erscheinen hinter der gelben Glocke. Von dort öffnest du direkt die betroffene Karte oder markierst alles als gesehen.</p></div>
             </div>
           </section>
 

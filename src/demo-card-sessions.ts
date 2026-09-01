@@ -10,6 +10,7 @@ type Session = EditReceipt & {
   addedComments: string[];
   addedAttachments: string[];
   removedAttachments: string[];
+  addedNotifications: string[];
 };
 const fields = [
   "title",
@@ -59,6 +60,7 @@ export class DemoCardSessions {
         addedComments: [],
         addedAttachments: [],
         removedAttachments: [],
+        addedNotifications: [],
       });
     }
     const s = this.sessions.get(id);
@@ -76,6 +78,11 @@ export class DemoCardSessions {
       if (fingerprint(state, cardId) !== s.fingerprint) s.conflicted = true;
       const before = state.cards.find((c) => c.id === cardId)!;
       next = applyDemoAction(state, actor, action);
+      s.addedNotifications.push(
+        ...next.notifications
+          .filter((item) => !state.notifications.some((old) => old.id === item.id))
+          .map((item) => item.id),
+      );
       const after = next.cards.find((c) => c.id === cardId);
       for (const field of fields) {
         if (
@@ -159,16 +166,18 @@ export class DemoCardSessions {
         ...next.attachments.filter((a) => a.card_id !== cardId),
         ...s.initial.attachments.filter((a) => a.card_id === cardId),
       ];
+      const initialNotifications = s.initial.notifications.filter(
+        (notification) => notification.card_id === cardId,
+      );
+      const initialNotificationIds = new Set(
+        initialNotifications.map((notification) => notification.id),
+      );
       next.notifications = next.notifications.filter(
-        (n) => !s.addedComments.includes(n.comment_id),
+        (notification) =>
+          !s.addedNotifications.includes(notification.id) &&
+          !initialNotificationIds.has(notification.id),
       );
-      next.notifications.push(
-        ...s.initial.notifications.filter(
-          (n) =>
-            n.card_id === cardId &&
-            !next.notifications.some((current) => current.id === n.id),
-        ),
-      );
+      next.notifications.push(...structuredClone(initialNotifications));
       garbage = s.addedAttachments;
       this.sessions.delete(id);
     }
