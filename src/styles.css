@@ -2137,6 +2137,23 @@ textarea {
 .form-footer > .icon-button {
   margin-left: auto;
 }
+.card-footer-actions {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+}
+.archive-card-button {
+  color: #61725b;
+  border-color: #dfe7d9;
+  background: #fbfcfa;
+}
+.archive-card-button:hover:not(:disabled) {
+  color: #365040;
+  border-color: #cbd8c3;
+  background: #f0f5ed;
+}
 .access-loading {
   min-height: 100dvh;
   width: 100%;

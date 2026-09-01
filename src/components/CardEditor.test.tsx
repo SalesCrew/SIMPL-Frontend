@@ -50,6 +50,19 @@ function renderEditor(state: BoardState, card?: Card, profileIndex = 0, busy = f
 }
 
 describe("CardEditor creation header", () => {
+  it.each([0, 2])("lets every role archive from the detailed card view (profile=%s)", (index) => {
+    const { state, card } = fixture();
+    const html = renderEditor(state, card, index);
+    const button = html.match(/<button[^>]*aria-label="Karte archivieren"[^>]*>[\s\S]*?<\/button>/)?.[0];
+    expect(button).toBeTruthy();
+    expect(button).not.toContain("disabled");
+    expect(button).toContain("Archivieren");
+    expect(button).toContain("lucide-archive");
+
+    const pending = renderEditor(state, card, index, true);
+    expect(pending).toMatch(/<button[^>]*aria-label="Karte archivieren"[^>]*disabled=""/);
+  });
+
   it.each([0, 2])("allows acknowledgement on and off for each role (profile=%s)", (index) => {
     const { state, card } = fixture();
     for (const reviewed of [false, true]) {

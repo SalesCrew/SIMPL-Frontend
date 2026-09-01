@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
+  Archive,
   Check,
   CheckCheck,
   MessageSquare,
@@ -438,15 +439,31 @@ export function CardEditor({
               </p>
             )}
             {card && (
-              <button
-                type="button"
-                className="icon-button danger"
-                aria-label="Karte löschen"
-                disabled={busy || uploading}
-                onClick={() => setConfirmDelete(true)}
-              >
-                <Trash2 size={16} />
-              </button>
+              <div className="card-footer-actions">
+                <button
+                  type="button"
+                  className="secondary archive-card-button"
+                  aria-label="Karte archivieren"
+                  title="Ins schreibgeschützte Archiv verschieben"
+                  disabled={busy || uploading}
+                  onClick={async () => {
+                    if (await mutate({ type: "card.archive", id: card.id }))
+                      close();
+                  }}
+                >
+                  <Archive size={15} />
+                  Archivieren
+                </button>
+                <button
+                  type="button"
+                  className="icon-button danger"
+                  aria-label="Karte löschen"
+                  disabled={busy || uploading}
+                  onClick={() => setConfirmDelete(true)}
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
             )}
           </div>
           {confirmDelete && (

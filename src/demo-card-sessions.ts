@@ -21,6 +21,7 @@ const fields = [
   "column_id",
   "completed_at",
   "reviewed_at",
+  "archived_at",
 ] as const;
 const fingerprint = (state: BoardState, id: string) =>
   JSON.stringify([

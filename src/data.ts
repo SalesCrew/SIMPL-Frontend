@@ -206,6 +206,8 @@ export async function runRemote(action: Action) {
         .select("id")
         .single();
       break;
+    case "card.archive":
+      throw new Error("Archivieren ist nur in der geöffneten Karte möglich.");
     case "card.delete":
       await apiRequest(`/cards/${action.id}`, "DELETE");
       return;

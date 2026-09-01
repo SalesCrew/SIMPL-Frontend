@@ -255,6 +255,23 @@ describe("Shared board behavior", () => {
     expect(cleared.cards[1].reviewed_at).toBeNull();
     expect(cleared.cards[1].reviewed_by).toBeNull();
   });
+  it.each([0, 2])("lets every workspace role archive a card (profile=%s)", (index) => {
+    const state = createSeed();
+    const original = structuredClone(state);
+    const card = state.cards[0];
+    const next = applyDemoAction(state, state.profiles[index], {
+      type: "card.archive",
+      id: card.id,
+    });
+    const archived = next.cards.find((item) => item.id === card.id)!;
+    expect(archived.archived_at).toBeTruthy();
+    expect(archived.completed_at).toBeTruthy();
+    expect(orderedCards(next, card.column_id).map((item) => item.id)).not.toContain(card.id);
+    expect(next.notifications.some((item) =>
+      item.card_id === card.id && item.event_type === "card.archived",
+    )).toBe(true);
+    expect(state).toEqual(original);
+  });
   it("notifies every accessible workspace member once, excluding the actor", () => {
     const s = createSeed();
     const actor = s.profiles[0];

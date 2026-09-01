@@ -38,6 +38,7 @@ export type Action =
     }
   | { type: "card.review"; id: string; reviewed: boolean }
   | { type: "card.complete"; id: string; completed: boolean }
+  | { type: "card.archive"; id: string }
   | { type: "card.delete"; id: string }
   | { type: "attachment.add"; attachment: Attachment }
   | { type: "attachment.delete"; id: string }
@@ -549,6 +550,20 @@ export function applyDemoAction(
         c,
         action.reviewed ? "card.reviewed" : "card.unreviewed",
         action.reviewed ? "Als wahrgenommen markiert" : "Wahrnehmung entfernt",
+      );
+      break;
+    }
+    case "card.archive": {
+      const c = card(action.id);
+      if (c.archived_at) break;
+      c.archived_at = now;
+      c.completed_at ||= now;
+      notifyWorkspaceActivity(
+        s,
+        actor,
+        c,
+        "card.archived",
+        "Karte archiviert",
       );
       break;
     }

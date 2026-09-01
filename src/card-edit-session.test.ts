@@ -212,6 +212,40 @@ describe("demo edit-session parity", () => {
       comments,
     );
   });
+  it("restores an archived card and retracts its activity on undo", () => {
+    const f = fixture();
+    const original = structuredClone(f.card);
+    const baselineNotificationIds = new Set(
+      f.state.notifications.map((item) => item.id),
+    );
+    const archived = f.operate("mutate", {
+      type: "card.archive",
+      id: f.card.id,
+    });
+    expect(
+      archived.state.cards.find((card) => card.id === f.card.id)?.archived_at,
+    ).toBeTruthy();
+    expect(
+      archived.receipt.events.some((event) => event.field === "archived_at"),
+    ).toBe(true);
+    expect(
+      archived.state.notifications.some(
+        (item) =>
+          !baselineNotificationIds.has(item.id) &&
+          item.event_type === "card.archived",
+      ),
+    ).toBe(true);
+
+    f.operate("close");
+    f.operate("undo");
+    expect(f.state.cards.find((card) => card.id === f.card.id)).toMatchObject({
+      ...original,
+      updated_at: expect.any(String),
+    });
+    expect(
+      f.state.notifications.filter((item) => !baselineNotificationIds.has(item.id)),
+    ).toEqual([]);
+  });
   it("refuses undo when another editor changed the card", () => {
     const f = fixture();
     f.operate("mutate", {
