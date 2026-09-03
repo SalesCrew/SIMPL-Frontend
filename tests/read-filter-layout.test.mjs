@@ -14,10 +14,12 @@ describe("Read state and filter styling", () => {
     expect(rule(".read-check.is-read")).toContain("opacity: 1;");
   });
 
-  it("uses a compact circular toolbar control with distinct states", () => {
+  it("uses a containerless toolbar control with distinct states", () => {
     const control = rule(".read-filter-control");
-    expect(control).toContain("width: 31px;");
-    expect(control).toContain("border-radius: 50%;");
+    expect(control).toContain("border: 0;");
+    expect(control).toContain("background: transparent;");
+    expect(rule(".read-filter-combined-icon")).toContain("width: 25px;");
+    expect(rule(".read-filter-combined-icon")).toContain("border-radius: 50%;");
     expect(rule(".read-filter-control.is-unread")).toContain("opacity: 0.42;");
     expect(rule(".read-filter-control.is-read")).toContain("color: #78a8d2;");
   });

@@ -1666,25 +1666,30 @@ textarea {
   font-size: 11px;
 }
 .read-filter-control {
-  width: 31px;
-  height: 31px;
-  flex: 0 0 31px;
+  width: 27px;
+  height: 27px;
+  flex: 0 0 27px;
   display: inline-grid;
   place-items: center;
   padding: 0;
-  border: 1px solid transparent;
-  border-radius: 50%;
+  border: 0;
+  border-radius: 0;
   background: transparent;
   color: #a7b2a1;
   transition:
     color 0.16s ease,
-    background-color 0.16s ease,
-    border-color 0.16s ease,
     opacity 0.16s ease;
 }
 .read-filter-control.is-all {
-  border-color: #e5ebe1;
-  background: #fff;
+  color: #a7b2a1;
+}
+.read-filter-combined-icon {
+  width: 25px;
+  height: 25px;
+  display: inline-grid;
+  place-items: center;
+  border: 1.25px solid #b9c4b5;
+  border-radius: 50%;
 }
 .read-filter-control.is-unread {
   color: #bdc7ba;
@@ -1692,18 +1697,12 @@ textarea {
 }
 .read-filter-control.is-read {
   color: #78a8d2;
-  border-color: #dce9f4;
-  background: #f0f6fb;
 }
 .read-filter-control:hover {
-  border-color: #d5dfcf;
-  background: #f5f8f3;
   opacity: 1;
 }
 .read-filter-control:focus-visible {
   outline: none;
-  border-color: #c8d7bf;
-  background: #eef4ea;
 }
 .card-title {
   padding: 0;

@@ -1,4 +1,4 @@
-import { CheckCheck, CircleX } from "lucide-react";
+import { CheckCheck } from "lucide-react";
 import { nextReadFilter, type ReadFilter } from "../read-filter";
 import { Tooltip } from "./ui/Tooltip";
 
@@ -34,7 +34,13 @@ export function ReadFilterButton({
         data-filter-state={value || "all"}
         onClick={() => onValueChange(nextReadFilter(value))}
       >
-        {value === "" ? <CircleX size={16} /> : <CheckCheck size={17} />}
+        {value === "" ? (
+          <span className="read-filter-combined-icon" aria-hidden="true">
+            <CheckCheck size={13} strokeWidth={1.8} />
+          </span>
+        ) : (
+          <CheckCheck size={19} strokeWidth={1.8} aria-hidden="true" />
+        )}
       </button>
     </Tooltip>
   );
