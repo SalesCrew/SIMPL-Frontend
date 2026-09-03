@@ -793,15 +793,15 @@ export default function App() {
                             })),
                         ]}
                       />}
-                      {view !== "archive" && (
-                        <ReadFilterButton
-                          value={readFilter}
-                          onValueChange={setReadFilter}
-                        />
-                      )}
                     </div>
                   </div>
                   <div className="toolbar-actions">
+                    {view !== "archive" && (
+                      <ReadFilterButton
+                        value={readFilter}
+                        onValueChange={setReadFilter}
+                      />
+                    )}
                     {view !== "archive" && <button
                       className="secondary label-manage"
                       onClick={() => setShowLabels(true)}
