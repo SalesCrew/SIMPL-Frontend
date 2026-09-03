@@ -2,6 +2,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Action } from "./domain";
 import type { BoardState, Profile, Workspace, AccessRevision, Card } from "./types";
 import type { CardMove } from "./optimistic-card-moves";
+import type { CardCreateAction } from "./optimistic-card-creates";
 
 const url = import.meta.env.VITE_SUPABASE_URL;
 const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -50,6 +51,27 @@ export async function moveCardRemote(action: CardMove): Promise<Card[]> {
   if (!Array.isArray(result?.cards) || !result.cards.some((card: Card) => card.id === action.id))
     throw new Error("Verschieben konnte nicht bestätigt werden. Bitte Verbindung prüfen.");
   return result.cards;
+}
+
+export async function createCardRemote(action: CardCreateAction): Promise<Card> {
+  if (!supabase) throw new Error("Supabase ist noch nicht eingerichtet.");
+  const { data, error } = await supabase
+    .from("cards")
+    .insert({
+      ...(action.id ? { id: action.id } : {}),
+      title: action.title,
+      description: action.description || "",
+      column_id: action.column_id,
+      project_id: action.project_id,
+      assignee_id: action.assignee_id,
+      label_ids: action.label_ids || [],
+      checklists: action.checklists || [],
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
+  if (!data) throw new Error("Die neue Karte konnte nicht bestätigt werden.");
+  return data as Card;
 }
 
 async function allRows(table: string) {
@@ -165,17 +187,8 @@ export async function runRemote(action: Action) {
       });
       break;
     case "card.create":
-      result = await db.from("cards").insert({
-        ...(action.id ? { id: action.id } : {}),
-        title: action.title,
-        description: action.description || "",
-        column_id: action.column_id,
-        project_id: action.project_id,
-        assignee_id: action.assignee_id,
-        label_ids: action.label_ids || [],
-        checklists: action.checklists || [],
-      });
-      break;
+      await createCardRemote(action);
+      return;
     case "card.update":
       result = await db
         .from("cards")

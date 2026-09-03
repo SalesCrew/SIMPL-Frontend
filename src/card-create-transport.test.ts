@@ -1,6 +1,8 @@
 import { beforeAll, expect, it, vi } from "vitest";
 
 const insert = vi.hoisted(() => vi.fn());
+const single = vi.hoisted(() => vi.fn());
+const select = vi.hoisted(() => vi.fn(() => ({ single })));
 const from = vi.hoisted(() => vi.fn(() => ({ insert })));
 vi.mock("@supabase/supabase-js", () => ({ createClient: () => ({ from }) }));
 
@@ -13,7 +15,16 @@ beforeAll(async () => {
 });
 
 it("persists manual and description-generated checklists with a new card", async () => {
-  insert.mockResolvedValue({ error: null });
+  insert.mockReturnValue({ select });
+  single.mockResolvedValue({
+    error: null,
+    data: {
+      id: "card-id",
+      title: "Neue Karte",
+      column_id: "project-id",
+      project_id: "project-id",
+    },
+  });
   const checklists = [{
     id: "simpl-description-checklist",
     name: "Aus Beschreibung",
@@ -36,4 +47,6 @@ it("persists manual and description-generated checklists with a new card", async
     description: "- Angebot prüfen",
     checklists,
   }));
+  expect(select).toHaveBeenCalledWith("*");
+  expect(single).toHaveBeenCalledOnce();
 });

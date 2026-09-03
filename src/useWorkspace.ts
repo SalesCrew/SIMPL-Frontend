@@ -7,8 +7,9 @@ import {
   visibleBoardForActor,
   type Action,
 } from "./domain";
-import { accountAccess, apiRequest, demoMode, loadBoard, moveCardRemote, runRemote, supabase } from "./data";
+import { accountAccess, apiRequest, createCardRemote, demoMode, loadBoard, moveCardRemote, runRemote, supabase } from "./data";
 import { mergeMoveReceipt, projectCardMoves, sameMoveAccess, type CardMove, type PendingCardMove } from "./optimistic-card-moves";
+import { mergeCardCreateReceipt, projectCardCreate, removeOptimisticCard, type CardCreateAction } from "./optimistic-card-creates";
 import { createSeed } from "./seed";
 import type { BoardState } from "./types";
 import { removeLocalBlob } from "./attachments";
@@ -330,8 +331,58 @@ export function useWorkspace() {
         setBusy(false);
       }
     });
-  const mutate = (action: Action): Promise<boolean> => !demoMode && action.type === "card.move"
-    ? moveCard(action) : mutateQueued(action);
+  const createCard = (action: CardCreateAction): Promise<boolean> =>
+    enqueue(async () => {
+      if (!current || !stateRef.current || current.id !== actorId.current)
+        return false;
+      setBusy(true);
+      setError("");
+      let optimisticId: string | null = null;
+      try {
+        await Promise.all(moveFlights.current.values());
+        if (!stateRef.current || current.id !== actorId.current) return false;
+
+        const projected = projectCardCreate(stateRef.current, current, action);
+        optimisticId = projected.card.id;
+        ++requestVersion.current;
+        stateRef.current = projected.state;
+        setState(projected.state);
+
+        const receipt = await createCardRemote(action);
+        if (current.id === actorId.current && stateRef.current) {
+          // Prevent a board request started before the committed insert from
+          // replacing the confirmed card with its older snapshot.
+          ++requestVersion.current;
+          const next = mergeCardCreateReceipt(stateRef.current, receipt);
+          stateRef.current = next;
+          setState(next);
+        }
+        return true;
+      } catch (e) {
+        if (optimisticId && current.id === actorId.current && stateRef.current) {
+          ++requestVersion.current;
+          const next = removeOptimisticCard(stateRef.current, optimisticId);
+          stateRef.current = next;
+          setState(next);
+          void refresh();
+        }
+        setError(
+          e instanceof Error
+            ? e.message
+            : (e as { message?: string }).message ||
+                "Die Karte konnte nicht erstellt werden.",
+        );
+        return false;
+      } finally {
+        setBusy(false);
+      }
+    });
+  const mutate = (action: Action): Promise<boolean> =>
+    !demoMode && action.type === "card.move"
+      ? moveCard(action)
+      : !demoMode && action.type === "card.create"
+        ? createCard(action)
+        : mutateQueued(action);
   const performEdit: EditTransport = async (id, operation, cardId, action) => {
     // Capture edit snapshots only after a preceding drag has settled.
     await moveFlights.current.get(cardId);
