@@ -2191,6 +2191,9 @@ textarea {
 .checklist-add-item:hover {
   color: #516b46;
 }
+.checklist-draft-save {
+  justify-self: start;
+}
 .form-footer {
   display: flex;
   align-items: center;

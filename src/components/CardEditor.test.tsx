@@ -169,6 +169,14 @@ describe("CardEditor creation header", () => {
     expect(html).toContain("Hinzufügen");
   });
 
+  it("offers manual checklist creation on an existing card", () => {
+    const { state, card } = fixture();
+    const html = renderEditor(state, card);
+    expect(html).toContain('aria-label="Checklisten erstellen"');
+    expect(html).toContain("Füge Punkte direkt hinzu");
+    expect(html).toContain("Hinzufügen");
+  });
+
   it("renders long titles and member names as plain text", () => {
     const { state, card } = fixture();
     card.title = "<script>alert(1)</script>" + "A".repeat(140);

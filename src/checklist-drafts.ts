@@ -45,8 +45,11 @@ export function checklistFromDescription(
   return { id: DESCRIPTION_CHECKLIST_ID, name: "Aus Beschreibung", items };
 }
 
-export function cleanDraftChecklists(checklists: Checklist[]): Checklist[] {
-  return checklists.slice(0, 19).flatMap((checklist) => {
+export function cleanDraftChecklists(
+  checklists: Checklist[],
+  limit = 19,
+): Checklist[] {
+  return checklists.slice(0, Math.max(0, limit)).flatMap((checklist) => {
     const items = checklist.items
       .slice(0, 200)
       .flatMap((item) => {
@@ -68,4 +71,31 @@ export function checklistsForNewCard(
 ): Checklist[] {
   const automatic = checklistFromDescription(description);
   return [...(automatic ? [automatic] : []), ...cleanDraftChecklists(manualChecklists)];
+}
+
+export function checklistsForDescriptionUpdate(
+  description: string,
+  existingChecklists: Checklist[],
+): Checklist[] {
+  const previousAutomatic = existingChecklists.find(
+    (checklist) => checklist.id === DESCRIPTION_CHECKLIST_ID,
+  );
+  const automatic = checklistFromDescription(description, previousAutomatic);
+  return [
+    ...(automatic ? [automatic] : []),
+    ...existingChecklists.filter(
+      (checklist) => checklist.id !== DESCRIPTION_CHECKLIST_ID,
+    ),
+  ];
+}
+
+export function checklistsWithNewDrafts(
+  existingChecklists: Checklist[],
+  draftChecklists: Checklist[],
+): Checklist[] {
+  const available = Math.max(0, 20 - existingChecklists.length);
+  return [
+    ...existingChecklists,
+    ...cleanDraftChecklists(draftChecklists, available),
+  ];
 }

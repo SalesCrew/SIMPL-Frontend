@@ -3,7 +3,9 @@ import {
   DESCRIPTION_CHECKLIST_ID,
   checklistFromDescription,
   checklistItemsFromDescription,
+  checklistsForDescriptionUpdate,
   checklistsForNewCard,
+  checklistsWithNewDrafts,
 } from "./checklist-drafts";
 
 describe("checklists while creating a card", () => {
@@ -46,5 +48,58 @@ describe("checklists while creating a card", () => {
       name: "Launch",
       items: [{ id: "one", name: "Freigabe", completed: false }],
     });
+  });
+
+  it("updates description items on an existing card without touching manual lists", () => {
+    const automatic = checklistFromDescription("- Angebot prüfen")!;
+    automatic.items[0].completed = true;
+    const manual = {
+      id: "manual",
+      name: "Launch",
+      items: [{ id: "one", name: "Freigabe", completed: false }],
+    };
+
+    const result = checklistsForDescriptionUpdate(
+      "Kontext\n- Angebot prüfen\n- Versand planen",
+      [automatic, manual],
+    );
+
+    expect(result[0].items).toEqual([
+      expect.objectContaining({ name: "Angebot prüfen", completed: true }),
+      expect.objectContaining({ name: "Versand planen", completed: false }),
+    ]);
+    expect(result[1]).toBe(manual);
+  });
+
+  it("removes only the automatic list when dash items leave the description", () => {
+    const automatic = checklistFromDescription("- Angebot prüfen")!;
+    const manual = {
+      id: "manual",
+      name: "Launch",
+      items: [{ id: "one", name: "Freigabe", completed: false }],
+    };
+    expect(checklistsForDescriptionUpdate("Nur Kontext", [automatic, manual]))
+      .toEqual([manual]);
+  });
+
+  it("cleans and appends manual checklists to an existing card", () => {
+    const existing = [{
+      id: "existing",
+      name: "Bestehend",
+      items: [{ id: "kept", name: "Bleibt", completed: true }],
+    }];
+    const result = checklistsWithNewDrafts(existing, [{
+      id: "new",
+      name: "  Neu  ",
+      items: [{ id: "new-item", name: "  Aufgabe  ", completed: false }],
+    }]);
+    expect(result).toEqual([
+      existing[0],
+      {
+        id: "new",
+        name: "Neu",
+        items: [{ id: "new-item", name: "Aufgabe", completed: false }],
+      },
+    ]);
   });
 });

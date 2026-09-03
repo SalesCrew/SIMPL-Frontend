@@ -7,11 +7,13 @@ export function ChecklistBuilder({
   value,
   automatic,
   disabled = false,
+  maxLists = 19,
   onChange,
 }: {
   value: Checklist[];
   automatic?: Checklist;
   disabled?: boolean;
+  maxLists?: number;
   onChange: (value: Checklist[]) => void;
 }) {
   const changeList = (id: string, update: (list: Checklist) => Checklist) =>
@@ -24,7 +26,7 @@ export function ChecklistBuilder({
         <button
           type="button"
           className="text-button"
-          disabled={disabled || value.length >= 19}
+          disabled={disabled || value.length >= maxLists}
           onClick={() =>
             onChange([
               ...value,

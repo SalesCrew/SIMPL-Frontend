@@ -23,8 +23,11 @@ import { CommentAttachments } from "./CommentAttachments";
 import { Checklists } from "./Checklists";
 import { ChecklistBuilder } from "./ChecklistBuilder";
 import {
+  cleanDraftChecklists,
   checklistFromDescription,
+  checklistsForDescriptionUpdate,
   checklistsForNewCard,
+  checklistsWithNewDrafts,
 } from "../checklist-drafts";
 import {
   colors,
@@ -121,6 +124,7 @@ export function CardEditor({
   );
   const [labels, setLabels] = useState(card?.label_ids || []);
   const [draftChecklists, setDraftChecklists] = useState<NonNullable<Card["checklists"]>>([]);
+  const checklistSlots = Math.max(0, 20 - (card?.checklists?.length || 0));
   const [sendingComment, setSendingComment] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const priorText = useRef({
@@ -336,18 +340,51 @@ export function CardEditor({
                     mutate({
                       type: "card.update",
                       id: card.id,
-                      patch: { description: value },
+                      patch: {
+                        description: value,
+                        checklists: checklistsForDescriptionUpdate(
+                          value,
+                          card.checklists || [],
+                        ),
+                      },
                     })
                 : undefined
             }
           />
-          {!card && (
-            <ChecklistBuilder
-              value={draftChecklists}
-              automatic={checklistFromDescription(description)}
-              disabled={busy || uploading}
-              onChange={setDraftChecklists}
-            />
+          <ChecklistBuilder
+            value={draftChecklists}
+            automatic={card ? undefined : checklistFromDescription(description)}
+            disabled={busy || uploading || checklistSlots === 0}
+            maxLists={card ? checklistSlots : 19}
+            onChange={setDraftChecklists}
+          />
+          {card && draftChecklists.length > 0 && (
+            <button
+              type="button"
+              className="secondary checklist-draft-save"
+              disabled={
+                busy ||
+                uploading ||
+                cleanDraftChecklists(draftChecklists, checklistSlots).length === 0
+              }
+              onClick={async () => {
+                const next = checklistsWithNewDrafts(
+                  card.checklists || [],
+                  draftChecklists,
+                );
+                if (
+                  await mutate({
+                    type: "card.update",
+                    id: card.id,
+                    patch: { checklists: next },
+                  })
+                )
+                  setDraftChecklists([]);
+              }}
+            >
+              <Check size={14} />
+              Checkliste speichern
+            </button>
           )}
           {card?.due_at && <p className="form-hint">Fällig · <time dateTime={card.due_at}>{timestamp(card.due_at)}</time></p>}
           {card?.checklists?.length ? <Checklists lists={card.checklists} disabled={busy}

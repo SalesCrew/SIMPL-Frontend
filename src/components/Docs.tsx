@@ -83,8 +83,8 @@ export const faqGroups: FaqGroup[] = [
       ["Wofür ist „In Arbeit“?", "„In Arbeit“ ist eine feste, manuelle Zwischenstufe. Eine Karte landet dort nur, wenn du sie selbst dorthin verschiebst."],
       ["Was passiert beim grünen Haken?", "Die Karte wird als erledigt markiert und immer in die feste Spalte „Fertig“ verschoben."],
       ["Was passiert, wenn ich den Haken wieder entferne?", "Die Karte kehrt an ihre zuletzt gemerkte Position im ursprünglichen Projekt zurück. Ein Zwischenstopp in „In Arbeit“ verändert diesen Ursprung nicht."],
-      ["Kann ich neue Checklisten erstellen?", "Ja. Klicke beim Erstellen einer Karte im Bereich „Checklisten“ auf „Hinzufügen“, benenne die Liste und ergänze beliebig viele Punkte."],
-      ["Wie erstelle ich eine Checkliste aus der Beschreibung?", "Beginne jede Aufgabe in der Beschreibung mit einem Bindestrich, zum Beispiel „- Angebot prüfen“. SIMPL erkennt diese Zeilen sofort und legt beim Erstellen der Karte automatisch die Checkliste „Aus Beschreibung“ an."],
+      ["Kann ich neue Checklisten erstellen?", "Ja. Klicke beim Erstellen oder in einer geöffneten Karte im Bereich „Checklisten“ auf „Hinzufügen“, benenne die Liste und ergänze beliebig viele Punkte."],
+      ["Wie erstelle ich eine Checkliste aus der Beschreibung?", "Beginne jede Aufgabe in der Beschreibung mit einem Bindestrich, zum Beispiel „- Angebot prüfen“. SIMPL legt beim Erstellen oder Speichern der Karte automatisch die Checkliste „Aus Beschreibung“ an."],
       ["Kann ich eigene Labels anlegen?", "Ja. Öffne „Labels“ beziehungsweise „Verwalten“, um Labels anzulegen, umzubenennen und mit einer passenden Pastellfarbe zu versehen."],
       ["Wie archiviere ich eine Karte?", "Öffne die Karte und klicke unten auf „Archivieren“. Jedes Mitglied mit Zugriff auf den Workspace kann das tun. Die Karte verschwindet sofort aus dem aktiven Board, bleibt im „Archiv“ vollständig erhalten und ist dort schreibgeschützt. Direkt danach kannst du die Aktion kurz rückgängig machen."],
       ["Kann ich eine gelöschte Karte zurückholen?", "Direkt nach dem Löschen erscheint kurz eine Rückgängig-Aktion. Danach ist die Löschung abgeschlossen."],
@@ -246,7 +246,7 @@ export function DocsPage({ search = "", onSearchChange = ignoreSearch }: {
             </div>
             <div className="docs-feature-grid">
               <div><Tags /><h3>Titel, Zuständigkeit & Labels</h3><p>Beim Erstellen wählst du Projekt, Titel und zuständige Person. Labels geben Aufgaben eine schnell erkennbare Kategorie.</p></div>
-              <div><ListChecks /><h3>Checklisten direkt mitplanen</h3><p>Lege beim Erstellen eigene Checklisten an. Zeilen mit „-“ in der Beschreibung werden zusätzlich automatisch zu Aufgaben.</p></div>
+              <div><ListChecks /><h3>Checklisten direkt mitplanen</h3><p>Lege beim Erstellen oder später eigene Checklisten an. Zeilen mit „-“ in der Beschreibung werden zusätzlich automatisch zu Aufgaben.</p></div>
               <div><MousePointer2 /><h3>Verschieben ohne Wartezeit</h3><p>Ziehe Karten zwischen Projekten und Statusspalten. Die Oberfläche reagiert sofort, während SIMPL im Hintergrund speichert.</p></div>
               <div><Check /><h3>Erledigen & zurückholen</h3><p>Der grüne Haken verschiebt immer nach „Fertig“. Entfernst du ihn, kehrt die Karte an ihre gemerkte Projektposition zurück.</p></div>
               <div><CheckCheck /><h3>Wahrgenommen</h3><p>Der doppelte Haken speichert, wer eine Karte gelesen beziehungsweise wahrgenommen hat – unabhängig vom Erledigt-Status.</p></div>
