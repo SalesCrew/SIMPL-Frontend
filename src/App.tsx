@@ -81,34 +81,13 @@ function Login() {
   }
   return (
     <main className="login-page">
-      <div className="login-story">
-        <a href="/" className="brand" aria-label="SIMPL Startseite">
+      <div className="login-shell">
+        <a href="/" className="login-brand" aria-label="SIMPL Startseite">
           <BrandLogo />
         </a>
-        <div>
-          <span className="eyebrow">EIN BOARD. EIN TEAM.</span>
-          <h1>
-            Gemeinsam
-            <br />
-            <em>weiter.</em>
-          </h1>
-          <p>Projekte und Aufgaben im Überblick.</p>
-          <div className="login-pills">
-            <span>
-              <CheckCheck size={15} />
-              Alles im Blick
-            </span>
-            <span>
-              <Users size={15} />
-              Im Austausch
-            </span>
-          </div>
-        </div>
-        <small>SalesCrew · Inkognito · Merchandising</small>
-      </div>
-      <div className="login-form-wrap">
+        <div className="login-accent" aria-hidden="true"><span /></div>
         <form className="login-form" onSubmit={login}>
-          <h2>Schön, dass du da bist.</h2>
+          <h1>Anmelden</h1>
           <label className="field">
             E-Mail-Adresse
             <input
@@ -152,6 +131,9 @@ function Login() {
             Wende dich an deinen Administrator.
           </p>
         </form>
+        <small className="login-companies">
+          SalesCrew · Inkognito · Merchandising
+        </small>
       </div>
     </main>
   );
