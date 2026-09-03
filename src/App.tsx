@@ -52,6 +52,8 @@ import { Tooltip, TooltipProvider } from "./components/ui/Tooltip";
 import { DocsPage, DocsSearchPopover } from "./components/Docs";
 import { timestamp, type Column, type Profile, type Workspace } from "./types";
 import { notificationAction } from "./notification-copy";
+import { cardMatchesReadFilter, type ReadFilter } from "./read-filter";
+import { ReadFilterButton } from "./components/ReadFilterButton";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -163,6 +165,7 @@ export default function App() {
   const [projectFilter, setProjectFilter] = useState("");
   const [search, setSearch] = useState("");
   const [memberFilter, setMemberFilter] = useState("");
+  const [readFilter, setReadFilter] = useState<ReadFilter>("");
   const [labelFilter, setLabelFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -209,6 +212,7 @@ export default function App() {
     setProjectFilter("");
     setSearch("");
     setMemberFilter("");
+    setReadFilter("");
     setLabelFilter("");
     setStatusFilter("");
     setShowFilters(false);
@@ -287,15 +291,10 @@ export default function App() {
           .toLowerCase()
           .includes(search.toLowerCase())) &&
       (!memberFilter || cardMatchesMember(c, memberFilter)) &&
+      cardMatchesReadFilter(c, readFilter) &&
       (!labelFilter || c.label_ids.includes(labelFilter)) &&
       (!statusFilter ||
-        (statusFilter === "unread"
-          ? !c.reviewed_at
-          : statusFilter === "read"
-            ? !!c.reviewed_at
-            : statusFilter === "open"
-              ? !c.completed_at
-              : !!c.completed_at)) &&
+        (statusFilter === "open" ? !c.completed_at : !!c.completed_at)) &&
       (view !== "mine" || cardMatchesMember(c, current.id)) &&
       (view !== "done" || !!c.completed_at),
   );
@@ -320,6 +319,7 @@ export default function App() {
   const filtersActive = [
     projectFilter,
     memberFilter,
+    readFilter,
     labelFilter,
     statusFilter,
     search,
@@ -327,6 +327,7 @@ export default function App() {
   const resetFilters = () => {
     setProjectFilter("");
     setMemberFilter("");
+    setReadFilter("");
     setLabelFilter("");
     setStatusFilter("");
     setSearch("");
@@ -792,6 +793,12 @@ export default function App() {
                             })),
                         ]}
                       />}
+                      {view !== "archive" && (
+                        <ReadFilterButton
+                          value={readFilter}
+                          onValueChange={setReadFilter}
+                        />
+                      )}
                     </div>
                   </div>
                   <div className="toolbar-actions">
@@ -887,16 +894,6 @@ export default function App() {
                                 {
                                   value: "done",
                                   label: "Erledigt",
-                                  icon: <CheckCheck size={14} />,
-                                },
-                                {
-                                  value: "unread",
-                                  label: "Noch nicht gelesen",
-                                  icon: <Bell size={14} />,
-                                },
-                                {
-                                  value: "read",
-                                  label: "Gelesen",
                                   icon: <CheckCheck size={14} />,
                                 },
                               ]}

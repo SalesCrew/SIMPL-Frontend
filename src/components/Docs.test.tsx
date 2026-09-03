@@ -26,10 +26,11 @@ describe("SIMPL documentation", () => {
   });
 
   it("provides a broad accessible Q&A", () => {
-    expect(html.match(/<details>/g)).toHaveLength(30);
-    expect(html.match(/<summary>/g)).toHaveLength(30);
+    expect(html.match(/<details>/g)).toHaveLength(31);
+    expect(html.match(/<summary>/g)).toHaveLength(31);
     expect(html).toContain("Wie melde ich mich an?");
     expect(html).toContain("Wie filtere ich nach einer Person?");
+    expect(html).toContain("Wie filtere ich nach gelesen oder ungelesen?");
     expect(html).toContain("Wie erstelle ich eine Checkliste aus der Beschreibung?");
     expect(html).toContain("Was mache ich, wenn etwas fehlt oder nicht lädt?");
   });

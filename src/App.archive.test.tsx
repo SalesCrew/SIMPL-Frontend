@@ -45,6 +45,8 @@ describe("Archive in the app", () => {
     const html = renderToStaticMarkup(<App />);
     expect(html).toContain("Neue Karte");
     expect(html).toContain('aria-label="Nach Mitglied filtern"');
+    expect(html).toContain('data-filter-state="all"');
+    expect(html).toContain("Gelesen und ungelesen");
     expect(html).toContain('class="secondary label-manage"');
     expect(html).toContain('class="board-columns"');
     expect(html).toContain("Live original");
