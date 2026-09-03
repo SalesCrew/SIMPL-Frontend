@@ -20,6 +20,7 @@ describe("Read state and filter styling", () => {
     expect(control).toContain("background: transparent;");
     expect(rule(".read-filter-combined-icon")).toContain("width: 25px;");
     expect(rule(".read-filter-combined-icon")).toContain("border-radius: 50%;");
+    expect(rule(".read-filter-combined-icon")).toContain("overflow: hidden;");
     expect(rule(".read-filter-combined-icon::after")).toContain("rotate(-38deg)");
     expect(rule(".read-filter-control.is-unread")).toContain("opacity: 0.42;");
     expect(rule(".read-filter-control.is-read")).toContain("color: #78a8d2;");
