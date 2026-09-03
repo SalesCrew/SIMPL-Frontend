@@ -15,6 +15,7 @@ describe("Minimal login layout", () => {
     expect(page).toContain("background: #fff;");
     expect(rule(".login-shell")).toContain("width: min(100%, 340px);");
     expect(rule(".login-accent")).toContain("width: 112px;");
+    expect(rule(".login-accent > span")).toContain("width: 100%;");
   });
 
   it("keeps the form compact without a decorative panel", () => {
