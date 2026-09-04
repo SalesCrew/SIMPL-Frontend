@@ -54,6 +54,7 @@ import { timestamp, type Column, type Profile, type Workspace } from "./types";
 import { notificationAction } from "./notification-copy";
 import { cardMatchesReadFilter, type ReadFilter } from "./read-filter";
 import { ReadFilterButton } from "./components/ReadFilterButton";
+import { EmailPreferences } from "./components/EmailPreferences";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -1017,11 +1018,13 @@ export default function App() {
         )}
         {showAccount && (
           <Dialog
-            title="Dein Platz im Team."
+            title="Dein Konto."
             description={current.email}
             onClose={() => setShowAccount(false)}
+            wide
           >
-            <div className="simple-form">
+            <div className="account-settings">
+              <section className="simple-form account-profile-pane">
               <div className="account-info">
                 <Avatar profile={current} />
                 <div>
@@ -1124,6 +1127,14 @@ export default function App() {
                   </button>
                 </>
               )}
+              </section>
+              <EmailPreferences
+                userId={current.id}
+                workspaces={allState.workspaces}
+                columns={allState.columns}
+                activeWorkspaceId={w.activeWorkspaceId}
+                demo={demoMode}
+              />
             </div>
           </Dialog>
         )}

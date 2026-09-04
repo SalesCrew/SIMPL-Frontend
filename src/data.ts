@@ -3,6 +3,11 @@ import type { Action } from "./domain";
 import type { BoardState, Profile, Workspace, AccessRevision, Card } from "./types";
 import type { CardMove } from "./optimistic-card-moves";
 import type { CardCreateAction } from "./optimistic-card-creates";
+import {
+  defaultEmailNotificationPreferences,
+  type EmailNotificationPreferences,
+  type EmailNotificationSettings,
+} from "./email-preferences";
 
 const url = import.meta.env.VITE_SUPABASE_URL;
 const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -70,6 +75,82 @@ export function triggerWorkspaceEmailForAction(action: Action) {
     // The committed outbox is durable. A later action, retry, or service restart
     // can resume delivery without delaying the visible UI action.
   });
+}
+
+export async function loadEmailNotificationPreferences(
+  userId: string,
+): Promise<EmailNotificationPreferences> {
+  if (!supabase) return defaultEmailNotificationPreferences();
+  const [settingsResult, workspaceResult, projectResult] = await Promise.all([
+    supabase.from("email_notification_settings").select(
+      "enabled,card_created,comment_created,card_reviewed,card_completed,card_archived",
+    ).eq("user_id", userId).maybeSingle(),
+    supabase.from("email_notification_workspace_preferences")
+      .select("workspace_id,enabled").eq("user_id", userId),
+    supabase.from("email_notification_project_preferences")
+      .select("project_id,enabled").eq("user_id", userId),
+  ]);
+  const error = settingsResult.error || workspaceResult.error || projectResult.error;
+  if (error) throw error;
+  const defaults = defaultEmailNotificationPreferences();
+  return {
+    settings: settingsResult.data
+      ? { ...defaults.settings, ...settingsResult.data }
+      : defaults.settings,
+    workspaces: Object.fromEntries(
+      (workspaceResult.data || []).map((row) => [row.workspace_id, row.enabled]),
+    ),
+    projects: Object.fromEntries(
+      (projectResult.data || []).map((row) => [row.project_id, row.enabled]),
+    ),
+  };
+}
+
+export async function saveEmailNotificationSettings(
+  userId: string,
+  settings: EmailNotificationSettings,
+) {
+  if (!supabase) return;
+  const { error } = await supabase.from("email_notification_settings").upsert({
+    user_id: userId,
+    ...settings,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: "user_id" });
+  if (error) throw error;
+}
+
+export async function saveWorkspaceEmailPreference(
+  userId: string,
+  workspaceId: string,
+  enabled: boolean,
+) {
+  if (!supabase) return;
+  const { error } = await supabase
+    .from("email_notification_workspace_preferences")
+    .upsert({
+      user_id: userId,
+      workspace_id: workspaceId,
+      enabled,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "user_id,workspace_id" });
+  if (error) throw error;
+}
+
+export async function saveProjectEmailPreference(
+  userId: string,
+  projectId: string,
+  enabled: boolean,
+) {
+  if (!supabase) return;
+  const { error } = await supabase
+    .from("email_notification_project_preferences")
+    .upsert({
+      user_id: userId,
+      project_id: projectId,
+      enabled,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "user_id,project_id" });
+  if (error) throw error;
 }
 
 export async function moveCardRemote(action: CardMove): Promise<Card[]> {
