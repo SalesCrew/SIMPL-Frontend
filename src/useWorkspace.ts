@@ -7,7 +7,7 @@ import {
   visibleBoardForActor,
   type Action,
 } from "./domain";
-import { accountAccess, apiRequest, createCardRemote, demoMode, loadBoard, moveCardRemote, runRemote, supabase } from "./data";
+import { accountAccess, apiRequest, createCardRemote, demoMode, loadBoard, moveCardRemote, runRemote, supabase, triggerWorkspaceEmailForAction } from "./data";
 import { mergeMoveReceipt, projectCardMoves, sameMoveAccess, type CardMove, type PendingCardMove } from "./optimistic-card-moves";
 import { mergeCardCreateReceipt, projectCardCreate, removeOptimisticCard, type CardCreateAction } from "./optimistic-card-creates";
 import { createSeed } from "./seed";
@@ -349,6 +349,7 @@ export function useWorkspace() {
         setState(projected.state);
 
         const receipt = await createCardRemote(action);
+        triggerWorkspaceEmailForAction(action);
         if (current.id === actorId.current && stateRef.current) {
           // Prevent a board request started before the committed insert from
           // replacing the confirmed card with its older snapshot.
@@ -419,6 +420,8 @@ export function useWorkspace() {
         p_action: action || null,
       });
       if (result.error) throw result.error;
+      if (operation === "mutate" && action)
+        triggerWorkspaceEmailForAction(action);
       if (changing) await refresh();
       if (operation === "undo" || operation === "discard")
         void apiRequest(`/cards/${cardId}/cleanup`, "POST").catch(() => {

@@ -41,6 +41,37 @@ export async function apiRequest(path: string, method: string, body?: unknown, k
   return json;
 }
 
+export type WorkspaceEmailEvent =
+  | "comment.created"
+  | "card.created"
+  | "card.reviewed"
+  | "card.completed"
+  | "card.archived";
+
+export function emailEventForAction(action: Action): WorkspaceEmailEvent | null {
+  switch (action.type) {
+    case "card.create": return "card.created";
+    case "comment.create": return "comment.created";
+    case "card.review": return action.reviewed ? "card.reviewed" : null;
+    case "card.complete": return action.completed ? "card.completed" : null;
+    case "card.archive": return "card.archived";
+    default: return null;
+  }
+}
+
+export function requestWorkspaceEmailDelivery(eventType: WorkspaceEmailEvent) {
+  return apiRequest("/email/dispatch", "POST", { event_type: eventType }, true);
+}
+
+export function triggerWorkspaceEmailForAction(action: Action) {
+  const eventType = emailEventForAction(action);
+  if (!eventType) return;
+  void requestWorkspaceEmailDelivery(eventType).catch(() => {
+    // The committed outbox is durable. A later action, retry, or service restart
+    // can resume delivery without delaying the visible UI action.
+  });
+}
+
 export async function moveCardRemote(action: CardMove): Promise<Card[]> {
   // Only this tiny JSON request uses keepalive, never file uploads. Once received,
   // the long-running backend owns the transaction independently of this page.
@@ -188,6 +219,7 @@ export async function runRemote(action: Action) {
       break;
     case "card.create":
       await createCardRemote(action);
+      triggerWorkspaceEmailForAction(action);
       return;
     case "card.update":
       result = await db
@@ -289,4 +321,5 @@ export async function runRemote(action: Action) {
     }
   }
   if (result?.error) throw result.error;
+  triggerWorkspaceEmailForAction(action);
 }
