@@ -191,6 +191,11 @@ export function canAccessWorkspace(
         )))
   );
 }
+export function workspaceAccessProfiles(state: BoardState, id: string) {
+  return state.profiles.filter(
+    (profile) => profile.active && canAccessWorkspace(state, profile, id),
+  );
+}
 export function visibleBoardForActor(
   state: BoardState,
   actor: Profile,

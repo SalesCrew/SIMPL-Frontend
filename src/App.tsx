@@ -25,7 +25,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { useWorkspace } from "./useWorkspace";
-import { workspaceBoard } from "./domain";
+import { workspaceAccessProfiles, workspaceBoard } from "./domain";
 import { cardMatchesMember } from "./card-filters";
 import { WorkspaceSwitcher, WorkspaceEditor } from "./components/Workspaces";
 import { demoMode, supabase } from "./data";
@@ -261,6 +261,10 @@ export default function App() {
   const activeWorkspace = allState.workspaces.find(
     (workspace) => workspace.id === w.activeWorkspaceId,
   )!;
+  const workspaceProfiles = workspaceAccessProfiles(
+    allState,
+    w.activeWorkspaceId,
+  );
   const admin = current.role === "admin";
   const cards = state.cards.filter(
     (c) =>
@@ -358,8 +362,15 @@ export default function App() {
         </p>
       </div>
       <div className="heading-right">
-        <TeamAvatars key={w.activeWorkspaceId} profiles={state.profiles} />
-        <span className="team-copy">Ein Board. Ein Team.</span>
+        <TeamAvatars
+          key={w.activeWorkspaceId}
+          profiles={workspaceProfiles}
+          label={`Zugriff auf ${activeWorkspace.name}`}
+        />
+        <span className="team-copy">
+          {workspaceProfiles.length}{" "}
+          {workspaceProfiles.length === 1 ? "Person" : "Personen"} mit Zugriff
+        </span>
       </div>
     </section>
   );

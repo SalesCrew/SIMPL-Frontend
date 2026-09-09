@@ -3,7 +3,13 @@ import type { Profile } from "../types";
 import { Avatar } from "./Board";
 import { avatarOverflow, avatarStackWidth, delayedAvatarClose } from "./avatar-overflow";
 
-export function TeamAvatars({ profiles }: { profiles: Profile[] }) {
+export function TeamAvatars({
+  profiles,
+  label = "Teammitglieder",
+}: {
+  profiles: Profile[];
+  label?: string;
+}) {
   const { visible, hidden } = avatarOverflow(profiles);
   const [open, setOpen] = useState(false);
   const expanded = open && hidden.length > 0;
@@ -87,7 +93,7 @@ export function TeamAvatars({ profiles }: { profiles: Profile[] }) {
 
   if (!visible.length && !hidden.length) return null;
   return (
-    <div className="avatar-stack team-avatar-group" ref={groupRef} role="group" aria-label="Teammitglieder"
+    <div className="avatar-stack team-avatar-group" ref={groupRef} role="group" aria-label={label}
       data-state={expanded ? "open" : "closed"}
       style={{ "--avatar-collapsed-width": `${collapsedWidth}px`,
         "--avatar-available-width": availableWidth === undefined ? undefined : `${availableWidth}px` } as CSSProperties}

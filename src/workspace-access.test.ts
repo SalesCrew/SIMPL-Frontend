@@ -4,6 +4,7 @@ import {
   applyDemoAction,
   canAccessWorkspace,
   visibleBoardForActor,
+  workspaceAccessProfiles,
   workspaceBoard,
   restoreFixedBuckets,
 } from "./domain";
@@ -55,6 +56,16 @@ describe("Workspace confidentiality", () => {
     ).toEqual(["c"]);
     expect(canAccessWorkspace(s, s.profiles[2], "c")).toBe(false);
     expect(visibleBoardForActor(s, s.profiles[0]).workspaces).toHaveLength(4);
+  });
+  it("lists only active profiles that can access the selected workspace", () => {
+    const s = setup();
+    expect(
+      workspaceAccessProfiles(s, "c").map((profile) => profile.id),
+    ).toEqual(["kilian", "philip", "david"]);
+    s.profiles[4].active = false;
+    expect(
+      workspaceAccessProfiles(s, "c").map((profile) => profile.id),
+    ).toEqual(["kilian", "philip"]);
   });
   it("hides profiles, comments, notifications, labels and attachments with cards", () => {
     const s = setup(),

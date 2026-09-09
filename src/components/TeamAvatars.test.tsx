@@ -44,6 +44,14 @@ describe("Header team avatars", () => {
     expect(html.match(/tabindex="0"/g)).toHaveLength(5);
     for (let i = 1; i <= 5; i++) expect(html).toContain(`aria-label="Mitglied ${i}"`);
   });
+  it("describes the workspace access group when a label is provided", () => {
+    const html = renderToStaticMarkup(
+      <TooltipProvider>
+        <TeamAvatars profiles={profiles(2)} label="Zugriff auf Samsung" />
+      </TooltipProvider>,
+    );
+    expect(html).toContain('role="group" aria-label="Zugriff auf Samsung"');
+  });
   it("does not add tab stops to avatars elsewhere in the app", () => {
     const html = renderToStaticMarkup(<Avatar profile={profiles(1)[0]} tooltip={false} />);
     expect(html).not.toContain("tabindex");
