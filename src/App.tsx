@@ -55,6 +55,11 @@ import { notificationAction } from "./notification-copy";
 import { cardMatchesReadFilter, type ReadFilter } from "./read-filter";
 import { ReadFilterButton } from "./components/ReadFilterButton";
 import { EmailPreferences } from "./components/EmailPreferences";
+import {
+  cardDeepLinkTarget,
+  initialCardDeepLink,
+  withoutCardDeepLink,
+} from "./card-deep-link";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -141,6 +146,7 @@ function Login() {
 }
 export default function App() {
   const w = useWorkspace();
+  const [deepLinkCardId, setDeepLinkCardId] = useState(initialCardDeepLink);
   const [view, setView] = useState<"board" | "mine" | "done" | "team" | "archive" | "docs">("board");
   const [workspaceEditor, setWorkspaceEditor] = useState<{
     workspace?: Workspace;
@@ -212,6 +218,35 @@ export default function App() {
     setProfileEditor(null);
     setShowLabels(false);
   }, [w.current?.id, w.activeWorkspaceId]);
+  useEffect(() => {
+    if (!deepLinkCardId || !w.state || !w.current?.active) return;
+    const target = cardDeepLinkTarget(w.state.cards, deepLinkCardId);
+    if (!target) {
+      setDeepLinkCardId(null);
+      window.history.replaceState(
+        window.history.state,
+        "",
+        withoutCardDeepLink(window.location.href),
+      );
+      w.setError("Die Karte wurde nicht gefunden oder du hast keinen Zugriff.");
+      return;
+    }
+    if (w.activeWorkspaceId !== target.workspaceId) {
+      w.selectWorkspace(target.workspaceId);
+      return;
+    }
+    setView(target.archived ? "archive" : "board");
+    setCardEditor({
+      id: target.id,
+      session: target.archived ? undefined : w.beginCardEdit(target.id),
+    });
+    setDeepLinkCardId(null);
+    window.history.replaceState(
+      window.history.state,
+      "",
+      withoutCardDeepLink(window.location.href),
+    );
+  }, [deepLinkCardId, w]);
   if (!demoMode && !supabase)
     return (
       <main className="setup">
