@@ -45,4 +45,13 @@ describe("Account gate before all board rendering", () => {
     expect(html).toContain("Erneut versuchen");
     expect(html).not.toContain('class="sidebar"');
   });
+  it("keeps an already loaded workspace visible during reconnects", () => {
+    gate.value = "ready";
+    gate.error = "Verbindung kurz unterbrochen.";
+    const html = renderToStaticMarkup(<App />);
+    expect(html).toContain('class="sidebar"');
+    expect(html).toContain("Dashboard – Mitbewerb");
+    expect(html).toContain('class="error-toast"');
+    expect(html).toContain("Verbindung kurz unterbrochen.");
+  });
 });

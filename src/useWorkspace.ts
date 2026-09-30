@@ -20,6 +20,7 @@ import {
   type EditTransport,
 } from "./card-edit-session";
 import { DemoCardSessions } from "./demo-card-sessions";
+import { workspaceRefreshFailure } from "./workspace-refresh";
 const demoKey = "trello-plus.demo.v1";
 function initialDemo() {
   try {
@@ -124,11 +125,10 @@ export function useWorkspace() {
       }
     } catch {
       if (version === requestVersion.current) {
-        setPasswordGate("checking");
-        clearBoard();
-        setError(
-          "Zugriffsrechte konnten nicht geprüft werden. Bitte Verbindung prüfen und erneut versuchen.",
-        );
+        const failure = workspaceRefreshFailure(Boolean(stateRef.current));
+        setPasswordGate(failure.passwordGate);
+        if (!failure.preserveBoard) clearBoard();
+        setError(failure.message);
       }
     }
   }, [clearBoard]);
