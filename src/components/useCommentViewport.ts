@@ -20,16 +20,8 @@ export function shouldRevealLatestComment(
   );
 }
 
-export function useCommentViewport(
-  cardId: string | undefined,
-  latestComment: Comment | undefined,
-  currentUserId: string,
-) {
-  const listRef = useRef<HTMLDivElement | null>(null);
-  const followingLatest = useRef(true);
-  const previous = useRef({ cardId, commentId: latestComment?.id });
-
-  const attachPanel = useCallback((panel: HTMLElement | null) => {
+export function useCommentPanelHeight() {
+  return useCallback((panel: HTMLElement | null) => {
     if (!panel) return;
     const viewport = panel.closest<HTMLElement>(".modal-body");
     if (!viewport) return;
@@ -43,6 +35,17 @@ export function useCommentViewport(
     observer.observe(viewport);
     return () => observer.disconnect();
   }, []);
+}
+
+export function useCommentViewport(
+  cardId: string | undefined,
+  latestComment: Comment | undefined,
+  currentUserId: string,
+) {
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const followingLatest = useRef(true);
+  const previous = useRef({ cardId, commentId: latestComment?.id });
+  const attachPanel = useCommentPanelHeight();
 
   const attachList = useCallback((list: HTMLDivElement | null) => {
     listRef.current = list;

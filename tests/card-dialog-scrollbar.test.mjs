@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const styles = readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
+const archive = readFileSync(new URL("../src/components/Archive.tsx", import.meta.url), "utf8");
 const rule = (selector) => {
   const start = styles.indexOf(`${selector} {`);
   expect(start, `Missing ${selector}`).toBeGreaterThanOrEqual(0);
@@ -35,5 +36,11 @@ describe("card dialog outer scrollbar", () => {
     expect(comments).not.toContain("scrollbar-width: none;");
     expect(rule(".comments-panel")).toContain("height: var(--comments-viewport-height,");
     expect(rule(".comments-panel")).toContain("position: sticky;");
+  });
+
+  it("keeps archived comments inside the same measured scroll viewport", () => {
+    expect(styles).not.toMatch(/\.archived-detail \.comments-panel\s*{[^}]*height:\s*100%/);
+    expect(archive).toContain("useCommentPanelHeight");
+    expect(archive).toContain('className="comments-panel" ref={attachCommentPanel}');
   });
 });

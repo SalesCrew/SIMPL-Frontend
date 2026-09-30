@@ -4796,7 +4796,6 @@ textarea {
 .archive-description { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; }
 .archived-detail .detail-main { display: grid; align-content: start; gap: 24px; }
 .archived-detail .detail-main h3 { font-size: 14px; }
-.archived-detail .comments-panel { height: 100%; }
 @media (max-width: 760px) {
   .archive-read-only { display: none; }
   .archive-heading p { max-width: 290px; }

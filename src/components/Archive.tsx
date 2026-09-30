@@ -6,6 +6,7 @@ import { Avatar } from "./Board";
 import { CommentAttachments } from "./CommentAttachments";
 import { Checklists } from "./Checklists";
 import { cardReadLabel } from "../card-review";
+import { useCommentPanelHeight } from "./useCommentViewport";
 
 export function ArchiveHeading() {
   return <section className="board-heading archive-heading">
@@ -85,6 +86,7 @@ export function ArchiveList({ cards, state, open, filtered = false, reset }: {
 
 export function ArchivedCard({ card, state, close }: { card: Card; state: BoardState; close: () => void }) {
   const comments = state.comments.filter((entry) => entry.card_id === card.id).sort((a,b) => a.created_at.localeCompare(b.created_at));
+  const attachCommentPanel = useCommentPanelHeight();
   return <Dialog wide title={card.title} onClose={close} closeOnOutside description={<>
     Erstellt von {state.profiles.find((p) => p.id === card.created_by)?.name || "Ehemaliges Mitglied"} · <time dateTime={card.created_at}>{timestamp(card.created_at)}</time>
   </>}>
@@ -101,7 +103,7 @@ export function ArchivedCard({ card, state, close }: { card: Card; state: BoardS
         <p className="form-hint">{card.completed_at ? `Erledigt · ${timestamp(card.completed_at)}` : "Nicht als erledigt markiert"}</p>
         {card.reviewed_at && <p className="form-hint"><CheckCheck size={15} /> {cardReadLabel(card,state.profiles)}</p>}
       </section>
-      <aside className="comments-panel">
+      <aside className="comments-panel" ref={attachCommentPanel}>
         <h3><MessageSquare size={16} />Kommentare <span>{comments.length}</span></h3>
         <div className="comment-list" role="region" aria-label="Archivierter Kommentarverlauf" tabIndex={0}>
           <div className="comment-thread">{comments.map((comment) => <div className="comment" key={comment.id}>
