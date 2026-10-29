@@ -7,7 +7,7 @@ const definitions = {
   'distribution-chart': { title: 'Typische Liefermenge', grain: 'month', note: 'Durchschnitt der Monatsmediane voller KW. Ein Tick ist ein vollständig abgedeckter Monat des KW-Sonntags, keine einzelne KW.' },
   'cohort-chart': { title: 'Eingangskohorten', grain: 'week', note: 'Zusätzlicher Zeitverlauf nach Eingangs-KW. Ungewichtetes Mittel der Wochenquoten; kein zusammengelegter Anteil. Unreife oder teilweise erfasste Kohorten bleiben leer.' },
   'overlay-chart': { title: 'Eigener Kennzahlenvergleich', note: 'Zuerst in Originaleinheiten gemittelt, dann mit der Skala der Basislinie normiert. Prozentwerte werden ungewichtet gemittelt. Zusammenhangsvorschläge verwenden weiterhin nur die Basisdaten.' },
-  projects: { title: 'Projektverlauf', adjustableGrain: true, defaults: { sources: ['total'] }, note: 'Zusätzlicher Zeitverlauf der erledigten Tasks. Die Anteile darüber beziehen sich weiterhin auf den gesamten Filterzeitraum.' },
+  projects: { title: 'Verlauf nach Labels', adjustableGrain: true, defaults: { sources: ['total'] }, note: 'Zusätzlicher Zeitverlauf der erledigten Tasks. Die Anteile darüber beziehen sich weiterhin auf den gesamten Filterzeitraum.' },
   weekdays: { title: 'Verlauf der Abschluss-Tage', grain: 'week', defaults: { sources: ['total'] }, note: 'Zusätzlicher Zeitverlauf je voller KW. „Montag“ zählt nur die Montag-Abschlüsse der jeweiligen KW. Es wird nicht über die Wochentagskategorien gemittelt.' },
 };
 const colors = ['#8063a0', '#a86b3c', '#397f99', '#698139', '#b45b76', '#4c668d'];
@@ -88,8 +88,8 @@ export function createMovingAverageRuntime({ document, options, lifecycle, helpe
     timeline('cohort-chart', rows, [7, 14, 28].map((n, index) => ({ key: 'cohort' + n, label: 'Binnen ' + n + ' Tagen erledigt', color: colors[index], unit: '%' })), 'week');
   }
   function projects(s) {
-    const grain = settings.projects.grain, state = getState(), names = [...new Set(s.context.completed.map(task => task.project))].sort((a, b) => a.localeCompare(b, 'de')), sources = [{ key: 'total', label: 'Alle ausgewählten Projekte', color: '#8063a0', value: row => row.total }, ...names.map((name, index) => ({ key: 'project:' + name, label: name, color: colors[(index + 1) % colors.length], value: row => row.projects[name] || 0 }))].map(source => ({ ...source, unit: grain === 'week' ? 'erledigte Tasks / KW' : 'erledigte Tasks / Tag' }));
-    const counts = new Map(); for (const task of s.tasks) { const key = grain === 'week' ? task.output_week : task.output_date; if (!counts.has(key)) counts.set(key, Object.create(null)); const bucket = counts.get(key); bucket[task.project] = (bucket[task.project] || 0) + 1; }
+    const grain = settings.projects.grain, state = getState(), names = s.labelCatalogue || [], sources = [{ key: 'total', label: 'Alle angezeigten Tasks', color: '#8063a0', value: row => row.total }, ...names.map((label, index) => ({ key: 'label:' + label.id, label: label.name, color: colors[(index + 1) % colors.length], value: row => row.projects[label.id] || 0 }))].map(source => ({ ...source, unit: grain === 'week' ? 'erledigte Tasks / KW' : 'erledigte Tasks / Tag' }));
+    const counts = new Map(); for (const task of s.tasks) { const key = grain === 'week' ? task.output_week : task.output_date; if (!counts.has(key)) counts.set(key, Object.create(null)); const bucket = counts.get(key); for(const label of names)if((task.label_ids||[]).includes(label.id))bucket[label.id]=(bucket[label.id]||0)+1; }
     const rows = grain === 'week' ? s.series.map(row => ({ day: row.week, week: row.week, partial: row.partial, total: row.count, projects: counts.get(row.week) || Object.create(null) })) : s.dailySeries.map(row => ({ ...row, partial: row.partial || row.day < state.historyStart, total: row.count, projects: counts.get(row.day) || Object.create(null) }));
     timeline('projects', rows, sources, grain);
   }

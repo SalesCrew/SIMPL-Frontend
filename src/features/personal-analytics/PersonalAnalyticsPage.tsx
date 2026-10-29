@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { CircleHelp, LoaderCircle, RefreshCw, X } from "lucide-react";
@@ -7,6 +7,8 @@ import { canRequestPersonalAnalytics } from "./access";
 import { fetchPersonalAnalytics, PersonalAnalyticsError } from "./api";
 import { mountPersonalAnalytics } from "./report-runtime.js";
 import { MovingAverageControl } from "./MovingAverageControl";
+import { MeetingContext } from "./meetings/MeetingContext";
+import type { MeetingChartLayout } from "./meetings/types";
 import type { AnalyticsHandle, AnalyticsViewSnapshot, AverageControlModel, AverageMountedControl, AverageSettings, MountedControl, PersonalAnalyticsPayload } from "./types";
 import "./report-base.css";
 import "./personal-analytics.css";
@@ -38,6 +40,9 @@ export default function PersonalAnalyticsPage({ actorId, revision }: { actorId: 
   const [loading, setLoading] = useState(true);
   const [attempt, setAttempt] = useState(0);
   const [mountError, setMountError] = useState("");
+  const [earliestMeetingDate, setEarliestMeetingDate] = useState<string | null>(null);
+  const noteEarliestMeeting = useCallback((day: string | null) => setEarliestMeetingDate(day && payload?.meta.first_date && day < payload.meta.first_date ? day : null), [payload?.meta.first_date]);
+  const [meetingLayout, setMeetingLayout] = useState<{ charts: MeetingChartLayout[]; panel: HTMLElement | null }>({ charts: [], panel: null });
   const refresh = useRef(() => setAttempt(n => n + 1));
   const allowed = canRequestPersonalAnalytics(actorId);
   useEffect(() => {
@@ -55,15 +60,16 @@ export default function PersonalAnalyticsPage({ actorId, revision }: { actorId: 
     if (!allowed || !payload || !host.current) return;
     const element = host.current;
     try {
-      const mounted = mountPersonalAnalytics(element, payload, { initialView: previousView.current, snapshotAt: payload.meta.snapshot_at, completedCount: payload.tasks.length, openCount: payload.flow_tasks.filter(t => !t.completed_at).length, archiveFallbackCount: payload.meta.archive_fallback_cards, onRefresh: () => refresh.current(), mountSelect: selectControl, mountInfo: infoControl, mountMovingAverage: averageControl });
+      const mounted = mountPersonalAnalytics(element, payload, { initialView: previousView.current, earliestMeetingDate, snapshotAt: payload.meta.snapshot_at, completedCount: payload.tasks.length, openCount: payload.flow_tasks.filter(t => !t.completed_at).length, archiveFallbackCount: payload.meta.archive_fallback_cards, onRefresh: () => refresh.current(), mountSelect: selectControl, mountInfo: infoControl, mountMovingAverage: averageControl, onMeetingCharts: (charts, panel) => setMeetingLayout(previous => previous.panel === panel && previous.charts.length === charts.length && charts.every((chart, i) => Object.entries(chart).every(([key, value]) => previous.charts[i][key as keyof MeetingChartLayout] === value)) ? previous : { charts, panel }) });
       engine.current = mounted;
       return () => { previousView.current = { state: mounted.getState(), overlay: mounted.getOverlayState(), averages: mounted.getAverageState(), preset: element.querySelector<HTMLButtonElement>('[data-preset].active')?.dataset.preset }; mounted.destroy(); if (engine.current === mounted) engine.current = null; };
     } catch { element.replaceChildren(); setPayload(null); setMountError("Die Darstellung konnte nicht geladen werden. Bitte erneut versuchen."); }
-  }, [payload, allowed]);
+  }, [payload, allowed, earliestMeetingDate]);
   if (!allowed) return <section className="personal-load-state"><h1>Seite nicht gefunden.</h1></section>;
   if ((!payload && loading) || mountError || (!payload && error)) return <section className="personal-load-state" role={error || mountError ? "alert" : "status"}><span className="personal-load-icon">{error || mountError ? <CircleHelp size={24} /> : <LoaderCircle size={24} className="spin" />}</span><h1>{error || mountError ? "Gerade nicht verfügbar." : "Dein Fortschritt wird geladen."}</h1><p>{error || mountError || "Deine Development-Daten werden sicher abgerufen."}</p>{(error || mountError) && <button type="button" className="secondary" onClick={() => setAttempt(n => n + 1)}><RefreshCw size={14} />Erneut versuchen</button>}</section>;
   return <section className="personal-analytics-page" aria-label="Persönlicher Fortschritt" aria-busy={loading}>
     {(error || loading) && <div className={`personal-refresh-status${error ? " is-error" : ""}`} role="status">{loading ? <><LoaderCircle size={12} className="spin" />Daten werden aktualisiert</> : <>{error}<button type="button" onClick={() => setAttempt(n => n + 1)}>Erneut versuchen</button></>}</div>}
     <div ref={host} className="personal-productivity" data-personal-analytics-root />
+    <MeetingContext actorId={actorId} revision={revision} refresh={attempt} layouts={meetingLayout.charts} panel={meetingLayout.panel} onEarliestDate={noteEarliestMeeting} />
   </section>;
 }

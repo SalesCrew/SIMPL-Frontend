@@ -8,6 +8,7 @@ export interface AnalyticsTask {
   archived_at?: string | null;
   deleted_at?: string | null;
   labels: string[];
+  label_ids?: string[];
   created_date?: string | null;
   created_local?: string | null;
   finished_local?: string | null;
@@ -27,6 +28,8 @@ export interface AnalyticsMeta {
   archive_fallback_cards?: number;
 }
 export interface PersonalAnalyticsPayload {
+  label_catalog?: { id: string; name: string; color?: string; primary: boolean }[];
+  project_catalog?: { id: string; name: string; color?: string }[];
   meta: AnalyticsMeta;
   flow_meta: AnalyticsMeta;
   tasks: AnalyticsTask[];
@@ -43,11 +46,13 @@ export interface AverageMountedControl { update: (model: AverageControlModel) =>
 export interface AnalyticsViewSnapshot { state: Record<string, unknown>; overlay: Record<string, unknown>; averages?: Record<string, AverageSettings>; preset?: string | null }
 export interface AnalyticsMountOptions {
   initialView?: AnalyticsViewSnapshot;
+  earliestMeetingDate?: string | null;
   snapshotAt: string;
   completedCount: number;
   openCount: number;
   archiveFallbackCount?: number;
   onRefresh: () => void;
+  onMeetingCharts?: (charts: import("./meetings/types").MeetingChartLayout[], panel: HTMLElement | null) => void;
   mountSelect: (slot: HTMLElement, select: HTMLSelectElement, label: string) => MountedControl;
   mountInfo: (slot: HTMLElement, content: string, label: string) => MountedControl;
   mountMovingAverage: (slot: HTMLElement, model: AverageControlModel, onChange: (settings: AverageSettings) => void, onExport: () => void) => AverageMountedControl;
