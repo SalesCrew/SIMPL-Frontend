@@ -48,3 +48,27 @@ export function clusterMeetingGroups(groups: ReturnType<typeof meetingGroups>, w
   }
   return clustered;
 }
+
+export function plotMeetingGroups(meetings: MeetingSummary[], plot: import("./types").MeetingPlot, seriesKey: string, scale = 1) {
+  const series = plot.series.find(line => line.key === seriesKey) || plot.series[0];
+  if (!series) return [];
+  const key = (day: string) => plot.grain === "week" ? monday(day) : plot.grain === "month" ? day.slice(0, 7) : day;
+  const points = new Map(series.points.map(point => [key(point.week || point.day), point]));
+  const groups: { tick: string; items: MeetingSummary[]; x: number; y: number; pointDay: string; value: number }[] = [];
+  for (const meeting of meetings) {
+    if (!meeting.meeting_date) continue;
+    const tick = key(meeting.meeting_date), point = points.get(tick);
+    if (!point) continue; // No interpolation or invented warm-up values.
+    const existing = groups.find(group => group.tick === tick);
+    if (existing) existing.items.push(meeting);
+    else groups.push({ tick, items: [meeting], x: point.x, y: point.y, pointDay: point.day, value: point.value });
+  }
+  const clustered: typeof groups = [];
+  for (const group of groups.sort((a,b)=>a.x-b.x)) {
+    const neighbour = clustered.find(other => Math.hypot(other.x-group.x,other.y-group.y)*scale < 25);
+    // Keep the first real plotted coordinate; a cluster never creates an averaged timestamp/value.
+    if (neighbour) neighbour.items.push(...group.items);
+    else clustered.push({...group,items:[...group.items]});
+  }
+  return clustered;
+}

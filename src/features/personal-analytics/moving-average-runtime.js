@@ -1,3 +1,4 @@
+import { recordMeetingPlot } from './meetings/chart-geometry.js';
 import { averageColumns, cleanAverageSettings, extendOverlayWithAverages, tickOrdinal } from './moving-averages.js';
 
 const definitions = {
@@ -53,6 +54,7 @@ export function createMovingAverageRuntime({ document, options, lifecycle, helpe
     return extended;
   }
   function frameLines(f, rows, columns, x, y) {
+    recordMeetingPlot(f.svg,{...f,x,y},rows,columns.map(column=>({...column,value:(_row,index)=>column.values[index]})),columns[0]?.grain||'day',true);
     const before = f.svg.querySelector('[data-deep-hit]');
     for (const column of columns) {
       let path = '', previous = -2;
