@@ -1,0 +1,10 @@
+{
+  "description": "Reviewed report code parity; contains no report data. App adapters scope DOM/lifecycle, reuse SIMPL controls and disclose explanations on demand.",
+  "modules": {
+    "report.js": "4fdfaf53240f0e6eccd201215af5ea9ad6b3980272ce7e7148a7830ae0f1e152",
+    "analytics.js": "3f979f8259e08edf604c7b748bf16d52dcb102eddfa7bf7a20947c46a3e46425",
+    "charts.js": "89134e4b4fb55a69d8eb24010968318a1b137f0ddba69402d176fa18cb83052f",
+    "deep.js": "dd41cf90b6765922143819762ecc635051ab69e0780710fdb3e1e4110761745c",
+    "relationships.js": "871368ea092c292c5683dbb798522eac1b98e06606d0ed364fececaefe54b9de"
+  }
+}

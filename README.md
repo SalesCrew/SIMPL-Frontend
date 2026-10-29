@@ -17,3 +17,11 @@ Only publishable configuration belongs in `VITE_` variables. Never add the Supab
 After login, `account_access_context()` runs before any workspace loading. Accounts with a temporary password see only the white first-login password form. Successful setup records a server-owned Supabase stamp and signs in with the new password; no password is stored in application state beyond the active form/submission. The database and API enforce the same gate independently of the UI.
 
 The companion API is [SIMPL-Backend](https://github.com/SalesCrew/SIMPL-Backend), hosted at https://simpl-backend-production.up.railway.app. Auth, authorized board operations, Realtime, and uploads use Supabase directly with RLS. Account operations, attachment finalization/removal and every file download use the API. Downloads must not fall back to direct Storage URLs: live authorization is checked by the backend on every request, and client Storage reads are denied.
+
+## Private Development analytics
+
+The verified owner's account opens `Dein Fortschritt` by default. The navigation sits immediately above `Team & Zugänge`. The API independently verifies the owner, active account and existing workspace permissions; client visibility alone grants no access. Deploy the companion backend endpoint before this frontend.
+
+`src/features/personal-analytics` contains the isolated report runtime, SIMPL controls and per-chart moving averages. Data is fetched at runtime with the current user's session and is never bundled or persisted in browser storage. UI selections survive a snapshot refresh only in memory. Tick windows average complete, consecutive displayed day/week/month intervals; missing and partial intervals stay blank. Normalized averages use their original source's domain. Relationship analysis continues to use original metrics.
+
+The imported report code is checked in, with source hashes in `source-provenance.json`. `scripts/import-personal-analytics.mjs` is an optional maintainer import for the original report code and static markup; it does not import data and is not part of the normal build. Preserve the app adapters and run the analytics tests after importing.

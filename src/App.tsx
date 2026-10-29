@@ -23,6 +23,7 @@ import {
   RefreshCw,
   ShieldCheck,
   BookOpen,
+  ChartNoAxesCombined,
 } from "lucide-react";
 import { useWorkspace } from "./useWorkspace";
 import { workspaceAccessProfiles, workspaceBoard } from "./domain";
@@ -60,6 +61,10 @@ import {
   initialCardDeepLink,
   withoutCardDeepLink,
 } from "./card-deep-link";
+
+import { canRequestPersonalAnalytics, initiallyRequestedPersonalAnalytics, writePersonalAnalyticsLocation } from "./features/personal-analytics/access";
+import { usePersonalAnalyticsAccess } from "./features/personal-analytics/usePersonalAnalyticsAccess";
+import { PersonalAnalyticsEntry } from "./features/personal-analytics/PersonalAnalyticsEntry";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -147,7 +152,12 @@ function Login() {
 export default function App() {
   const w = useWorkspace();
   const [deepLinkCardId, setDeepLinkCardId] = useState(initialCardDeepLink);
-  const [view, setView] = useState<"board" | "mine" | "done" | "team" | "archive" | "docs">("board");
+  const directPersonalRequest = useRef(initiallyRequestedPersonalAnalytics());
+  const analyticsActor = !demoMode && w.passwordGate === "ready" && w.current?.active && w.user?.id === w.current.id && canRequestPersonalAnalytics(w.current.id) ? w.current.id : null;
+  const analyticsAccess = usePersonalAnalyticsAccess(analyticsActor, w.state?.access_revision?.authorization_version);
+  const initialActor = useRef<string | null>(null);
+  const previousWorkspace = useRef<string | null>(null);
+  const [view, setView] = useState<"board" | "mine" | "done" | "team" | "archive" | "docs" | "analytics">("board");
   const [workspaceEditor, setWorkspaceEditor] = useState<{
     workspace?: Workspace;
   } | null>(null);
@@ -187,7 +197,7 @@ export default function App() {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        searchRef.current?.focus();
+        (searchRef.current || document.querySelector<HTMLInputElement>(".personal-productivity #task-search"))?.focus();
       }
     };
     window.addEventListener("keydown", handler);
@@ -197,7 +207,12 @@ export default function App() {
     if (w.current?.role !== "admin" && view === "team") setView("board");
   }, [w.current?.role, view]);
   useEffect(() => {
-    setView("board");
+    const id = w.current?.id || null;
+    const firstForAccount = id !== initialActor.current;
+    if (firstForAccount) setView(directPersonalRequest.current || (!demoMode && canRequestPersonalAnalytics(id)) ? "analytics" : "board");
+    else if (previousWorkspace.current !== (w.activeWorkspaceId || null)) setView("board");
+    initialActor.current = id;
+    previousWorkspace.current = w.activeWorkspaceId || null;
     setProjectFilter("");
     setSearch("");
     setMemberFilter("");
@@ -290,6 +305,8 @@ export default function App() {
         </button>
       </main>
     );
+  if (analyticsActor && !deepLinkCardId && ((view === "analytics" && analyticsAccess.status === "checking") || initialActor.current !== analyticsActor))
+    return <AccessLoading message="Dein persönlicher Bereich wird geprüft" />;
   const { current, mutate, busy } = w;
   const allState = w.state;
   const state = workspaceBoard(allState, w.activeWorkspaceId);
@@ -324,6 +341,7 @@ export default function App() {
     .filter((n) => n.recipient_id === current.id && !n.seen_at)
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
   const title =
+    view === "analytics" ? (analyticsActor ? "Dein Fortschritt" : "Seite nicht gefunden") :
     view === "archive"
       ? "Archiv"
       : view === "mine"
@@ -355,6 +373,8 @@ export default function App() {
     setSearch("");
   };
   const navigate = (next: typeof view, project = "") => {
+    if (next === "analytics" && analyticsAccess.status !== "allowed") return;
+    writePersonalAnalyticsLocation(next === "analytics");
     setView(next);
     resetFilters();
     setProjectFilter(project);
@@ -497,6 +517,9 @@ export default function App() {
                 ))}
             </nav>
             <div className="sidebar-bottom">
+              {analyticsAccess.status === "allowed" && analyticsActor && (
+                <button type="button" className={`nav-item personal-analytics-nav ${view === "analytics" ? "active" : ""}`} onClick={() => navigate("analytics")} aria-label="Dein Fortschritt"><ChartNoAxesCombined />Dein Fortschritt<ArrowUpRight size={14} /></button>
+              )}
               {admin && (
                 <button
                   className={`nav-item ${view === "team" ? "active" : ""}`}
@@ -553,12 +576,12 @@ export default function App() {
         <main className="main-area">
           <header className="topbar">
             <div className="breadcrumb">
-              {activeWorkspace.name}
+              {view === "analytics" && analyticsActor ? "Development" : activeWorkspace.name}
               <ChevronRight size={14} />
               <span>{title}</span>
             </div>
             <div className="topbar-actions">
-              <div className={`search${view === "docs" ? " docs-header-search" : ""}`}>
+              {view !== "analytics" && <div className={`search${view === "docs" ? " docs-header-search" : ""}`}>
                 <Search size={17} />
                 <input
                   ref={searchRef}
@@ -572,7 +595,7 @@ export default function App() {
                 />
                 <kbd>⌘ K</kbd>
                 {view === "docs" && <DocsSearchPopover query={search} />}
-              </div>
+              </div>}
               <NotificationBell
                 unreadCount={unread.length}
                 open={showNews}
@@ -704,7 +727,7 @@ export default function App() {
               )}
             </section>
           )}
-          {view === "docs" ? <DocsPage search={search} onSearchChange={setSearch} /> : <>
+          {view === "analytics" ? analyticsAccess.status === "allowed" && analyticsActor ? <PersonalAnalyticsEntry actorId={analyticsActor} revision={allState.access_revision?.board_version} /> : <section className="personal-entry-state" role={analyticsActor ? "alert" : undefined}><h1>{analyticsActor ? "Dein Bereich ist gerade nicht erreichbar." : "Seite nicht gefunden."}</h1>{analyticsActor && <button type="button" className="secondary" onClick={analyticsAccess.retry}><RefreshCw size={14} />Erneut versuchen</button>}<button type="button" className="secondary" onClick={() => navigate("board")}>Zum Taskboard</button></section> : view === "docs" ? <DocsPage search={search} onSearchChange={setSearch} /> : <>
           {view === "team" && admin && boardHeading}
           {view === "team" && admin ? (
             <div className="team-page">
@@ -993,7 +1016,7 @@ export default function App() {
                     : "Zugriffsprüfung alle 5 Sekunden"}
             </span>
             <span>
-              {view === "archive" ? "Originale Inhalte. Jederzeit nachlesen." : view === "docs" ? "Einfach nachlesen. Direkt weiterarbeiten." : "Karten verschieben. Fortschritt schaffen."}
+              {view === "analytics" ? "Dein Fortschritt. Nur für dich." : view === "archive" ? "Originale Inhalte. Jederzeit nachlesen." : view === "docs" ? "Einfach nachlesen. Direkt weiterarbeiten." : "Karten verschieben. Fortschritt schaffen."}
               <CheckCheck size={14} />
             </span>
           </footer>

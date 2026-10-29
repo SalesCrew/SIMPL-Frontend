@@ -4813,3 +4813,7 @@ textarea {
 @media (prefers-reduced-motion: reduce) {
   .archive-row:not(:disabled) { transition: none; }
 }
+
+/* Scoped loading/error surface for the private, account-gated entry only. */
+.personal-entry-state{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;padding:40px;text-align:center;color:#7f9373;background:#fdfefd}.personal-entry-state h1{font-size:24px;font-weight:var(--font-weight-semibold);color:#667f5b}.personal-entry-state p{font-size:12px;color:#98a18e}.personal-entry-state .secondary{display:flex;gap:8px;align-items:center}
+@media(max-width:760px){.sidebar-bottom .nav-item.personal-analytics-nav{display:flex;justify-content:center;font-size:0}.sidebar-bottom .personal-analytics-nav>svg:first-child{display:block;width:17px;height:17px}.sidebar-bottom .personal-analytics-nav>svg:last-child{display:none}}
