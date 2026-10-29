@@ -43,7 +43,7 @@ export interface MountedControl {
 export interface AverageSettings { periods: number[]; sources: string[]; grain: "day" | "week" }
 export interface AverageControlModel { id: string; title: string; grain: "day" | "week" | "month"; adjustableGrain?: boolean; note: string; sources: { key: string; label: string }[]; settings: AverageSettings }
 export interface AverageMountedControl { update: (model: AverageControlModel) => void; destroy: () => void }
-export interface AnalyticsViewSnapshot { state: Record<string, unknown>; overlay: Record<string, unknown>; averages?: Record<string, AverageSettings>; preset?: string | null }
+export interface AnalyticsViewSnapshot { state: Record<string, unknown>; overlay: Record<string, unknown>; averages?: Record<string, AverageSettings>; preset?: string | null; thresholds?: ThresholdSettings }
 export interface AnalyticsMountOptions {
   initialView?: AnalyticsViewSnapshot;
   earliestMeetingDate?: string | null;
@@ -53,6 +53,7 @@ export interface AnalyticsMountOptions {
   archiveFallbackCount?: number;
   onRefresh: () => void;
   onMeetingCharts?: (charts: import("./meetings/types").MeetingChartLayout[], panel: HTMLElement | null) => void;
+  mountThresholds: (slot: HTMLElement, model: ThresholdControlModel, onChange: (value: ThresholdSettings) => void) => { update: (model: ThresholdControlModel) => void; destroy: () => void };
   mountSelect: (slot: HTMLElement, select: HTMLSelectElement, label: string) => MountedControl;
   mountInfo: (slot: HTMLElement, content: string, label: string) => MountedControl;
   mountMovingAverage: (slot: HTMLElement, model: AverageControlModel, onChange: (settings: AverageSettings) => void, onExport: () => void) => AverageMountedControl;
@@ -61,7 +62,12 @@ export interface AnalyticsHandle {
   api: { calc: () => unknown; getRelationships: () => unknown; getState: () => Record<string, unknown>; getOverlayState: () => Record<string, unknown> };
   getState: () => Record<string, unknown>;
   getOverlayState: () => Record<string, unknown>;
+  getThresholdState?: () => ThresholdSettings;
   getAverageState: () => Record<string, AverageSettings>;
   summary: () => { total: number };
   destroy: () => void;
 }
+
+export interface ThresholdRule { value: number; sources: string[] }
+export interface ThresholdSettings { rules: Record<string, ThresholdRule>; backgroundKey: string | null; backgrounds?: { native?: string | null; normalized?: string | null } }
+export interface ThresholdControlModel { axes: { key: string; side: string; label: string; unit: string; rule: ThresholdRule | null; lines: { key: string; label: string }[] }[]; settings: ThresholdSettings; activeCount: number; normalized: boolean }

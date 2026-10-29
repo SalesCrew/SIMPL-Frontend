@@ -1,0 +1,37 @@
+.personal-threshold-slot{display:inline-flex;flex:0 0 auto}
+.personal-productivity .personal-threshold-trigger{display:inline-flex;align-items:center;gap:6px;min-height:31px;border:1px solid #dfe6ef;background:#fff;color:#718196;border-radius:8px;padding:7px 9px;font:500 9px var(--font-ui);white-space:nowrap;cursor:pointer}
+.personal-productivity .personal-threshold-trigger:hover,.personal-productivity .personal-threshold-trigger.is-active,.personal-productivity .personal-threshold-trigger[data-state=open]{background:#f3f6fa;color:#45647f;border-color:#c7d5e4}
+.personal-productivity .personal-threshold-trigger:focus-visible{outline:1px solid #9ab2ce;outline-offset:2px}
+.personal-threshold-popover{z-index:125;width:min(350px,calc(100vw - 24px));max-height:min(650px,var(--radix-popover-content-available-height),calc(100dvh - 28px));overflow:auto;background:#fff;color:#475569;border:1px solid #dce5ee;border-radius:14px;box-shadow:0 10px 36px #26394e1c;padding:17px;font:11px var(--font-ui);scrollbar-width:thin;scrollbar-color:#c2cfdd90 transparent;animation:personal-popover-in .12s ease-out}
+.personal-threshold-heading{display:flex;gap:14px;justify-content:space-between;align-items:flex-start;margin-bottom:18px}
+.personal-threshold-heading strong{font-size:13px;font-weight:600;color:#2c4156;line-height:1.6}
+.personal-threshold-heading p{font-size:10px;color:#8a98a8;line-height:1.7;margin:4px 0 0}
+.personal-threshold-heading .icon-button{flex:0 0 24px;width:24px;height:24px;color:#8c9bad}
+.threshold-label{display:block;font-size:10px;color:#718296;margin:15px 0 7px}
+.personal-threshold-popover .select-trigger{height:36px;width:100%;font-size:10px;border-color:#dce4ee;color:#4d647c}
+.threshold-value-field{display:flex;align-items:center;border:1px solid #dce4ee;border-radius:9px;background:#fcfdfe;padding:0 11px;gap:8px;min-height:43px}
+.threshold-value-field:focus-within{border-color:#9cb7d1}
+.threshold-value-field input{border:0;outline:0;box-shadow:none;min-width:0;flex:1;width:100%;padding:10px 0;background:transparent;font:500 18px var(--font-ui);color:#334d65}
+.threshold-value-field input::placeholder{color:#bfcbda;font-size:14px;font-weight:400}
+.threshold-value-field>span{font-size:10px;color:#8a9caf;white-space:nowrap}
+.threshold-preview{display:flex;justify-content:space-between;gap:12px;margin:10px 0 18px;font-size:9px;color:#8293a4}
+.threshold-preview span{display:flex;align-items:center;gap:6px}
+.threshold-preview i{height:5px;width:5px;border-radius:50%}.threshold-preview .is-green{background:#2b8a64}.threshold-preview .is-red{background:#c15c65}
+.threshold-background{display:flex;gap:8px;align-items:center;font-size:10px;line-height:1.8;color:#5d7389;cursor:pointer}
+.personal-threshold-popover input[type=checkbox]{width:12px;height:12px;accent-color:#6484a5;flex:0 0 12px}
+.threshold-lines{border-top:1px solid #e9eef4;border-bottom:1px solid #e9eef4;margin:15px 0 10px;padding:11px 0;color:#6b8197}
+.threshold-lines summary{cursor:pointer;font-size:10px;line-height:1.8}.threshold-lines summary>span{float:right;font-size:9px;color:#95a5b6}
+.threshold-lines>div{display:grid;gap:9px;padding-top:13px;max-height:210px;overflow:auto;scrollbar-width:thin;scrollbar-color:#c2cfdd90 transparent}
+.threshold-lines label{display:flex;align-items:flex-start;gap:8px;font-size:10px;color:#6b8197;line-height:1.7}
+.threshold-note,.threshold-empty{font-size:9px;color:#91a0b1;line-height:1.85;margin:12px 0}
+.threshold-error{font-size:10px;color:#af6671;margin:10px 0}
+.threshold-actions{display:flex;align-items:center;justify-content:space-between;gap:14px;padding-top:8px}
+.threshold-actions button{border:0;border-radius:7px;background:transparent;color:#8a9bad;padding:8px 0;font:10px var(--font-ui);cursor:pointer}
+.threshold-actions button:disabled{opacity:.4;cursor:default}
+.threshold-actions .threshold-apply{padding:9px 17px;background:#426b53;color:#fff;font-weight:500}
+.threshold-actions .threshold-apply:hover:not(:disabled){background:#365a44}
+.personal-productivity .personal-threshold-status{margin:0 22px 9px;font:9px var(--font-ui);color:#718498;line-height:1.9}
+.personal-threshold-popover button:focus-visible{outline:1px solid #99b2ce;outline-offset:2px}
+@media(max-width:750px){.personal-threshold-popover{padding:15px}.personal-productivity .personal-threshold-status{margin-left:14px;margin-right:14px}}
+@media(prefers-reduced-motion:reduce){.personal-threshold-popover{animation:none!important}}
+@media print{.personal-threshold-slot,.personal-threshold-popover{display:none!important}}
