@@ -103,14 +103,16 @@ export function createOverlayThresholds({ document, options, lifecycle, redraw }
     }
     for (const line of model.lines) {
       const rule = thresholdForLine(model, state, line); if (!rule) continue;
-      const base = [...svg.querySelectorAll('[data-overlay-series]')].find(path => path.getAttribute('data-overlay-series') === line.key); if (!base) continue;
-      base.setAttribute('stroke-opacity', '0');
-      const group = node('g', { 'clip-path': 'url(#overlay-clip)', 'pointer-events': 'none', 'aria-hidden': 'true' });
-      for (const [zone, color] of [['below', red], ['above', green]]) {
-        const path = base.cloneNode(false); path.removeAttribute('data-overlay-series');
-        path.setAttribute('data-threshold-series', line.key); path.setAttribute('data-threshold-zone', zone); path.setAttribute('stroke', color); path.setAttribute('stroke-opacity', '1'); path.setAttribute('stroke-dasharray',patterns.get(line.key)||''); path.setAttribute('clip-path', `url(#personal-threshold-${rule.axis.side}-${zone})`); group.append(path);
+      const base = [...svg.querySelectorAll('[data-overlay-series]')].find(path => path.getAttribute('data-overlay-series') === line.key);
+      if (base) {
+        base.setAttribute('stroke-opacity', '0');
+        const group = node('g', { 'clip-path': 'url(#overlay-clip)', 'pointer-events': 'none', 'aria-hidden': 'true' });
+        for (const [zone, color] of [['below', red], ['above', green]]) {
+          const path = base.cloneNode(false); path.removeAttribute('data-overlay-series');
+          path.setAttribute('data-threshold-series', line.key); path.setAttribute('data-threshold-zone', zone); path.setAttribute('stroke', color); path.setAttribute('stroke-opacity', '1'); path.setAttribute('stroke-dasharray',patterns.get(line.key)||''); path.setAttribute('clip-path', `url(#personal-threshold-${rule.axis.side}-${zone})`); group.append(path);
+        }
+        svg.append(group);
       }
-      svg.append(group);
       const boundary = y(rule.value, rule.axis);
       for (const dot of svg.querySelectorAll('[data-overlay-point]')) if (dot.getAttribute('data-overlay-point') === line.key) dot.setAttribute('fill', Number(dot.getAttribute('cy')) <= boundary ? green : red);
     }

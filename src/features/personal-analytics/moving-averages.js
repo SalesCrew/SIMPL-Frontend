@@ -25,7 +25,7 @@ export function averageColumns(rows, sources, settings, grain) {
   const selected = settings.sources.includes('*') ? sources : sources.filter(source => settings.sources.includes(source.key));
   return selected.flatMap(source => settings.periods.map((period, index) => ({
     ...source, baseKey: source.key, key: 'ma:' + source.key + ':' + period, period, grain,
-    label: source.label + ' · Ø ' + period + ' Ticks', dash: ['6 3', '2 3', '10 3 2 3', '9 5'][index % 4],
+    label: (source.render === 'points' ? source.label.replace(/\s+\(Punkte\)$/, '') : source.label) + ' · Ø ' + period + ' Ticks', dash: ['6 3', '2 3', '10 3 2 3', '9 5'][index % 4],
     values: movingAverage(rows, row => source.value ? source.value(row) : row[source.key], period, row => tickOrdinal(grain === 'week' ? row.week || row.day : row.day, grain)),
   })));
 }
@@ -40,7 +40,7 @@ export function extendOverlayWithAverages(model, settings, grain) {
       row.plot[column.key] = value === null ? null : model.normalized ? parent.max === parent.min ? 50 : 100 * (value - parent.min) / (parent.max - parent.min) : value;
     });
     const { value: _value, values: _values, ...line } = column;
-    return { ...line, normalizationMin: parent.min, normalizationMax: parent.max, min: finite.length ? Math.min(...finite) : null, max: finite.length ? Math.max(...finite) : null, constant: finite.length > 0 && finite.every(v => v === finite[0]), description: 'Arithmetisches Mittel der letzten ' + column.period + ' vollständigen dargestellten Intervalle von „' + parent.label + '“. Prozentwerte werden ungewichtet gemittelt. In der Normierung gilt dieselbe Spannweite wie für die Basislinie.' };
+    return { ...line, render: 'line', normalizationMin: parent.min, normalizationMax: parent.max, min: finite.length ? Math.min(...finite) : null, max: finite.length ? Math.max(...finite) : null, constant: finite.length > 0 && finite.every(v => v === finite[0]), description: 'Arithmetisches Mittel der letzten ' + column.period + ' vollständigen dargestellten Intervalle von „' + parent.label + '“. Prozentwerte werden ungewichtet gemittelt. In der Normierung gilt dieselbe Spannweite wie für die Basislinie.' };
   });
   return { ...model, rows, lines: [...model.lines, ...lines] };
 }

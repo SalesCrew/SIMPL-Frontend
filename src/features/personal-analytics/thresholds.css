@@ -37,6 +37,14 @@
 .personal-productivity .personal-threshold-status{margin:0 22px 9px;font:9px var(--font-ui);color:#718498;line-height:1.9}
 .personal-productivity .personal-read-cycle-coverage{margin:8px 22px 13px;padding:11px 13px;border-radius:9px;background:#f5f8f3;color:#788a70;font:10px/1.85 var(--font-ui)}
 .personal-productivity .personal-read-cycle-coverage[hidden]{display:none}
+.personal-productivity .personal-read-cycle-cadence{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 16px;margin:5px 22px 12px;font:10px/1.8 var(--font-ui);color:#7d8e75}
+.personal-productivity .personal-read-cycle-cadence[hidden]{display:none}
+.personal-read-cycle-cadence button{border:0;border-radius:7px;background:#edf4e8;color:#55794a;padding:7px 10px;font:500 10px var(--font-ui);cursor:pointer}
+.personal-read-cycle-cadence button:hover:not(:disabled){background:#e1ecd9;color:#3f6634}
+.personal-read-cycle-cadence button:focus-visible{outline:1px solid #8faa7e;outline-offset:2px}
+.personal-read-cycle-cadence button:disabled{opacity:.5;cursor:default}
+.personal-read-cycle-cadence .read-cycle-trend-key{color:#8b679a}
+.personal-productivity .personal-read-cycle-cadence:focus{outline:none}
 .personal-threshold-popover button:focus-visible{outline:1px solid #99b2ce;outline-offset:2px}
 @media(max-width:750px){.personal-threshold-popover{padding:15px}.personal-productivity .personal-threshold-status{margin-left:14px;margin-right:14px}}
 @media(prefers-reduced-motion:reduce){.personal-threshold-popover{animation:none!important}}

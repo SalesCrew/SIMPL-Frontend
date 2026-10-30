@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readCycleSeries, weightedReadCycleWeek, datasetReference, readCycleCSV } from './read-cycle.js';
+import { readCycleSeries, weightedReadCycleWeek, datasetReference, readCycleCSV, readCycleMeaning } from './read-cycle.js';
 import { cleanThresholdState, resolvedThresholdRule, thresholdForLine, thresholdBackground } from './overlay-thresholds.js';
 const task = (id, day, hours, status = 'valid') => ({ id, output_date: day, read_to_finish_hours: hours, read_to_finish_status: status });
 const settings = { from: '2026-09-01', through: '2026-10-01', historyStart: '2026-05-01', snapshotDay: '2026-10-01', firstFullDay: '2026-09-01' };
@@ -32,6 +32,14 @@ describe('calendar read-to-finish metrics', () => {
   });
   it('older payloads do not invent a 28-day history', () => {
     expect(readCycleSeries([], { ...settings, firstFullDay: null }).every(r => r.readCycle28 === null)).toBe(true);
+  });
+  it('distinguishes days without completions, invalid pairs and genuine zero-hour values', () => {
+    const base = { day: '2026-09-03', values: { readCycleDaily: null, readCycleDayN: 0, readCycleDayTotal: 0, readCycleDayHours: 0 } };
+    expect(readCycleMeaning({ key: 'readCycleDaily' }, base, 'day')).toMatch(/Keine Abschlüsse/);
+    expect(readCycleMeaning({ key: 'readCycleDaily' }, { ...base, values: { ...base.values, readCycleDayTotal: 2 } }, 'day')).toMatch(/2 Abschlüsse, aber kein gültiges/);
+    const zero = readCycleMeaning({ key: 'readCycleDaily' }, { ...base, values: { ...base.values, readCycleDaily: 0, readCycleDayN: 1, readCycleDayTotal: 1 } }, 'day');
+    expect(zero).toMatch(/0 Kalenderstunden ÷ 1/); expect(zero).not.toMatch(/kein.*durchschnitt/);
+    expect(readCycleMeaning({ key: 'readCycle28' }, { day: '2026-09-03', values: { readCycle28N: null } }, 'day')).toMatch(/Noch kein vollständig beobachtetes/);
   });
 });
 describe('dataset-derived threshold references', () => {

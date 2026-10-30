@@ -3,7 +3,7 @@ const shiftDay = (day, n) => new Date(Date.parse(day + 'T12:00:00Z') + n * dayMs
 const num = n => new Intl.NumberFormat('de-AT', { maximumFractionDigits: 2 }).format(n);
 export const isReadCycle = key => key === 'readCycleDaily' || key === 'readCycle28';
 export const readCycleMetrics = {
-  readCycleDaily: { label: 'Gelesen → Fertig · Ø je Abschlusstag', unit: 'Kalenderstunden / Task', family: 'hours', color: '#4b789e', hint: 'Ø Zeit ab eigenem SIMPL-Lesestempel für die an diesem Tag fertigen Tasks. Ohne belegte Stempel bleibt eine Lücke.', description: 'Summe der Kalenderstunden vom eigenen nativen Gelesen-Stempel bis Fertig, geteilt durch die Zahl dieser auswertbaren Tasks. In KW: nach Tasks gewichteter Wochendurchschnitt. Wartezeit ist enthalten; kein Aufwand oder Nachweis der Taskgröße.', aggregation: 'task-weighted' },
+  readCycleDaily: { label: 'Gelesen → Fertig · Ø je Abschlusstag (Punkte)', unit: 'Kalenderstunden / Task', family: 'hours', color: '#4b789e', render: 'points', hint: 'Ein Punkt pro Tag mit auswertbaren Abschlüssen. Ohne passenden Gelesen-/Fertig-Stempel gibt es keinen Tagesdurchschnitt. Für den Verlauf: die 28-Tage-Linie ergänzen.', description: 'Summe der Kalenderstunden vom eigenen nativen Gelesen-Stempel bis Fertig, geteilt durch die Zahl dieser auswertbaren Tasks. Jeder Punkt ist ein belegter Tageswert; leere Tage sind keine null Stunden. In KW: nach Tasks gewichteter Wochendurchschnitt. Wartezeit ist enthalten; kein Aufwand oder Nachweis der Taskgröße.', aggregation: 'task-weighted' },
   readCycle28: { label: 'Gelesen → Fertig · Ø der letzten 28 Tage', unit: 'Kalenderstunden / Task', family: 'hours', color: '#8b679a', hint: 'Alle auswertbaren Tasks mit Fertig-Stempel in den letzten 28 vollen Tagen: Gesamtzeit ÷ Taskzahl.', description: 'Nach Tasks gewichtete mittlere Durchlaufzeit der Abschlüsse in 28 vollständigen Kalendertagen. Tage ohne auswertbaren Abschluss zählen nicht als null Stunden. Importierte Lesestempel und unbekannte/verkehrte Zeitfolgen bleiben ausgeschlossen. Keine gemessene Arbeitszeit oder Taskschwierigkeit.', aggregation: 'last' },
 };
 
@@ -37,6 +37,8 @@ export function readCycleMeaning(line, row, grain) {
   const d = row.values, rolling = line.key === 'readCycle28';
   const n = d[rolling ? 'readCycle28N' : 'readCycleDayN'], total = d[rolling ? 'readCycle28Total' : 'readCycleDayTotal'], sum = d[rolling ? 'readCycle28Hours' : 'readCycleDayHours'];
   const from = rolling ? shiftDay(row.day, -27) : grain === 'week' ? row.week : row.day;
+  if (n === null || n === undefined) return rolling ? 'Noch kein vollständig beobachtetes 28-Tage-Fenster mit nativen SIMPL-Lesestempeln. Deshalb kein Durchschnitt.' : 'Dieser Zeitraum ist noch nicht vollständig beobachtet. Deshalb kein Durchschnitt.';
+  if (!n) return `${from}–${row.day}: ${total ? `${total} Abschlüsse, aber kein gültiges eigenes Gelesen-/Fertig-Zeitpaar.` : 'Keine Abschlüsse in diesem Zeitraum.'} Deshalb kein ${rolling ? '28-Tage-' : grain === 'week' ? 'Wochen' : 'Tages'}durchschnitt; das bedeutet weder 0 Stunden noch keine Arbeit.`;
   return `${from}–${row.day}: ${num(sum || 0)} Kalenderstunden ÷ ${n || 0} auswertbare Tasks = ${Number.isFinite(d[line.key]) ? num(d[line.key]) : '—'} h/Task. ${n || 0} von ${total || 0} Abschlüssen mit passenden eigenen SIMPL-Lesestempeln. Einschließlich Wartezeit; keine Arbeitszeit oder belegte Taskgröße.`;
 }
 export function readCycleCSV(line, row) {
@@ -45,7 +47,24 @@ export function readCycleCSV(line, row) {
   return [d[rolling ? 'readCycle28N' : 'readCycleDayN'] ?? '', d[rolling ? 'readCycle28Hours' : 'readCycleDayHours'] ?? '', d[rolling ? 'readCycle28Total' : 'readCycleDayTotal'] ?? ''];
 }
 
-export function renderReadCycleNotice(document, model, summary, coverage) {
+export function renderReadCycleNotice(document, model, summary, coverage, addTrend) {
+  let cadence = document.getElementById('read-cycle-cadence');
+  if (!cadence) { cadence = document.createElement('div'); cadence.id = 'read-cycle-cadence'; cadence.className = 'personal-read-cycle-cadence'; cadence.tabIndex = -1; document.getElementById('overlay-chart').after(cadence); }
+  cadence.hidden = !model.lines.some(line => line.key === 'readCycleDaily');
+  cadence.replaceChildren();
+  if (!cadence.hidden) {
+    const text = document.createElement('span');
+    text.textContent = model.grain === 'week' ? 'Punkte = auswertbare KW-Durchschnitte. Wochen ohne Zeitpaar bleiben leer.' : 'Punkte = Tage mit auswertbarem Abschluss. Leere Tage bedeuten keinen Tagesdurchschnitt, nicht 0 Stunden.';
+    cadence.append(text);
+    if (!model.selected.includes('readCycle28') && addTrend) {
+      const button = document.createElement('button'); button.type = 'button'; button.textContent = '28-Tage-Linie ergänzen'; button.onclick = () => { const focused = button.ownerDocument.activeElement === button; addTrend(); if (focused) cadence.focus({ preventScroll: true }); };
+      button.disabled = !model.dailyRows.some(row => Number.isFinite(row.values.readCycle28));
+      if (button.disabled) button.title = 'Für diese Auswahl gibt es noch kein vollständig beobachtetes 28-Tage-Fenster mit auswertbaren Abschlüssen.';
+      cadence.append(button);
+    } else if (model.selected.includes('readCycle28')) {
+      const key = document.createElement('span'); key.className = 'read-cycle-trend-key'; key.textContent = 'Linie = gewichteter 28-Tage-Durchschnitt'; cadence.append(key);
+    }
+  }
   let notice = document.getElementById('read-cycle-coverage');
   if (!notice) { notice = document.createElement('p'); notice.id = 'read-cycle-coverage'; notice.className = 'personal-read-cycle-coverage'; document.getElementById('overlay-legend').after(notice); }
   notice.hidden = !model.lines.some(line => isReadCycle(line.key));

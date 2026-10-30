@@ -29,12 +29,12 @@ describe("displayed tick moving averages", () => {
     expect(rows[0]).not.toHaveProperty("ma:a:2");
   });
   it("normalizes the average using its parent's domain, retains raw units and axes", () => {
-    const line = { key: "a", label: "A", min: 0, max: 10, axis: 1, color: "green", family: "count", unit: "Tasks" };
+    const line = { key: "a", label: "A", min: 0, max: 10, axis: 1, color: "green", family: "count", unit: "Tasks", render: "points" };
     const model = { normalized: true, lines: [line], rows: [0, 10, 0].map((a, i) => ({ day: `2026-10-0${i + 1}`, values: { a }, plot: { a: a * 10 } })), axes: [{ min: 0, max: 100 }], selected: ["a"] };
     const result = extendOverlayWithAverages(model, { periods: [2], sources: ["*"] }, "day");
     expect(result.rows.map((row) => row.plot["ma:a:2"])).toEqual([null, 50, 50]);
     expect(result.rows[1].values["ma:a:2"]).toBe(5);
-    expect(result.lines[1]).toMatchObject({ axis: 1, family: "count", unit: "Tasks" });
+    expect(result.lines[1]).toMatchObject({ axis: 1, family: "count", unit: "Tasks", render: "line" });
     expect(model.lines).toHaveLength(1); expect(model.rows[1].values).toEqual({ a: 10 });
   });
   it("excludes partial weekly counts and preserves missing weekly ticks", () => {
