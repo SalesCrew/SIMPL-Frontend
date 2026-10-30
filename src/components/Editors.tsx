@@ -187,7 +187,7 @@ export function CardEditor({
       });
       if (ok && !abort.signal.aborted) close();
     } catch (error) {
-      if (!abort.signal.aborted) setCreationError(`${creation.created ? "Die Karte wurde erstellt. " : ""}${(error as Error).message} Deine übrigen Dateien bleiben hier zum erneuten Speichern erhalten.`);
+      setCreationError(`${creation.created ? "Die Karte wurde erstellt. " : ""}${abort.signal.aborted ? "Upload abgebrochen." : (error as Error).message} Deine übrigen Dateien bleiben hier zum erneuten Speichern erhalten.`);
     } finally {
       creationAbort.current = null;
       setUploading(false);
@@ -438,6 +438,7 @@ export function CardEditor({
               {creationProgress.label && <div className="attachment-upload" role="status">
                 <small>{creationProgress.label} · {creationProgress.percent} %</small>
                 <progress value={creationProgress.percent} max={100} />
+                <button type="button" className="text-button" onClick={() => creationAbort.current?.abort()}>Upload abbrechen</button>
               </div>}
               {creationError && <p className="attachment-message" role="alert">{creationError}</p>}
             </>
