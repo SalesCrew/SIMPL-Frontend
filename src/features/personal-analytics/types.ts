@@ -5,6 +5,10 @@ export interface AnalyticsTask {
   created_at: string;
   completed_at: string | null;
   original_completed_at?: string | null;
+  reviewed_at?: string | null;
+  reviewed_by_owner?: boolean;
+  read_to_finish_hours?: number | null;
+  read_to_finish_status?: string;
   archived_at?: string | null;
   deleted_at?: string | null;
   labels: string[];
@@ -28,6 +32,7 @@ export interface AnalyticsMeta {
   archive_fallback_cards?: number;
 }
 export interface PersonalAnalyticsPayload {
+  read_cycle?: { native_from: string; first_full_day: string; basis: string; eligible_finished_cards: number; note: string };
   label_catalog?: { id: string; name: string; color?: string; primary: boolean }[];
   project_catalog?: { id: string; name: string; color?: string }[];
   meta: AnalyticsMeta;
@@ -68,6 +73,7 @@ export interface AnalyticsHandle {
   destroy: () => void;
 }
 
-export interface ThresholdRule { value: number; sources: string[] }
+export interface DatasetReference { value: number; original: number; n: number; total: number | null; sum: number | null; start: string; end: string; method: string; unit: string; note: string }
+export interface ThresholdRule { value: number; sources: string[]; reference?: { source: string; period: "28d" | "visible" } }
 export interface ThresholdSettings { rules: Record<string, ThresholdRule>; backgroundKey: string | null; backgrounds?: { native?: string | null; normalized?: string | null } }
-export interface ThresholdControlModel { axes: { key: string; side: string; label: string; unit: string; rule: ThresholdRule | null; lines: { key: string; label: string }[] }[]; settings: ThresholdSettings; activeCount: number; normalized: boolean }
+export interface ThresholdControlModel { axes: { key: string; side: string; label: string; unit: string; rule: ThresholdRule | null; lines: { key: string; label: string; references?: { "28d": DatasetReference | null; visible: DatasetReference | null } }[] }[]; settings: ThresholdSettings; activeCount: number; normalized: boolean }

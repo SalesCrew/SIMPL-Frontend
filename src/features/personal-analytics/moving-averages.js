@@ -40,7 +40,7 @@ export function extendOverlayWithAverages(model, settings, grain) {
       row.plot[column.key] = value === null ? null : model.normalized ? parent.max === parent.min ? 50 : 100 * (value - parent.min) / (parent.max - parent.min) : value;
     });
     const { value: _value, values: _values, ...line } = column;
-    return { ...line, min: finite.length ? Math.min(...finite) : null, max: finite.length ? Math.max(...finite) : null, constant: finite.length > 0 && finite.every(v => v === finite[0]), description: 'Arithmetisches Mittel der letzten ' + column.period + ' vollständigen dargestellten Intervalle von „' + parent.label + '“. Prozentwerte werden ungewichtet gemittelt. In der Normierung gilt dieselbe Spannweite wie für die Basislinie.' };
+    return { ...line, normalizationMin: parent.min, normalizationMax: parent.max, min: finite.length ? Math.min(...finite) : null, max: finite.length ? Math.max(...finite) : null, constant: finite.length > 0 && finite.every(v => v === finite[0]), description: 'Arithmetisches Mittel der letzten ' + column.period + ' vollständigen dargestellten Intervalle von „' + parent.label + '“. Prozentwerte werden ungewichtet gemittelt. In der Normierung gilt dieselbe Spannweite wie für die Basislinie.' };
   });
   return { ...model, rows, lines: [...model.lines, ...lines] };
 }

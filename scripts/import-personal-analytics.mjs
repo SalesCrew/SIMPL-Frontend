@@ -4,6 +4,7 @@ import { resolve, dirname } from 'node:path';
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { applyLabelAnalytics } from './label-analytics-adapter.mjs';
+import { applyReadCycleAnalytics } from './read-cycle-analytics-adapter.mjs';
 const requireVite = createRequire(import.meta.resolve('vite'));
 const postcss = requireVite('postcss');
 const source = process.argv[2];
@@ -25,6 +26,7 @@ markup = markup.replace('Eigenständige Datei · Keine externen Dienste oder Bib
 markup = markup.replace('Drei weitere Perspektiven', 'GENAUER HINSEHEN');
 markup = markup.replace('<section class="metrics"', '<div id="meeting-context-slot"></div><section class="metrics"');
 markup = markup.replace('<details class="overlay-picker" open>', '<details class="overlay-picker" open>');
+markup = markup.replace('<button type="button" data-overlay-preset="empty">', '<button type="button" data-overlay-preset="cycle">Menge &amp; Durchlaufzeit</button><button type="button" data-overlay-preset="empty">');
 // A comma only separates selectors outside strings, brackets and parentheses.
 function selectors(input) { let depth = 0, quote = '', escaped = false, start = 0, out = []; for (let i=0;i<input.length;i++){const c=input[i];if(escaped){escaped=false;continue}if(c==='\\'){escaped=true;continue}if(quote){if(c===quote)quote='';continue}if(c==='"'||c==="'"){quote=c;continue}if(c==='('||c==='[')depth++;if(c===')'||c===']')depth--;if(c===','&&!depth){out.push(input.slice(start,i).trim());start=i+1}}out.push(input.slice(start).trim());return out; }
 const ast = postcss.parse(css);
@@ -59,6 +61,7 @@ script=script.replace("fill:cell.rate!==null&&cell.rate>70?'#fff':'#203e38'", "f
 script=script.replace('function drawOverlay(s){', 'function drawOverlayContent(s){');
 script=script.replace('firstWeek=monday(DATA.meta.first_date)',"firstWeek=monday([DATA.meta.first_date,options.earliestMeetingDate||DATA.meta.first_date].sort()[0])");
 script=applyLabelAnalytics(script);
+script=applyReadCycleAnalytics(script);
 // Stable adapters keep the imported report's original metrics and relationships intact.
 function adapt(before, after) { if (!script.includes(before)) throw new Error('Report adapter target changed: ' + before.slice(0, 100)); script = script.replace(before, after); }
 adapt('function render(){const s=calc();', 'function renderReportContent(){const s=calc();');
@@ -80,11 +83,11 @@ adapt("const primaryValues=rows.map", "recordMeetingPlot(svg,{width,height,left,
 adapt("stroke:'#174c46','stroke-width':1.6", "stroke:'#174c46','stroke-width':1.6,'data-series':'open'");
 adapt("averages.backlog(s,f,rows,x,y);", "recordMeetingPlot(f.svg,{...f,x,y},rows,[{key:'open',label:'Noch offene Tasks · insgesamt',color:'#174c46',value:row=>row.open}]);averages.backlog(s,f,rows,x,y);");
 adapt("deepHover(f,rows,x,row=>({title:dayLabel(row.day)+(overlayState.grain", "thresholds.paint(f,model,yy);recordMeetingPlot(f.svg,{...f,x,y:(value,line)=>yy(value,model.axes[line.axis])},rows,model.lines.map(line=>({...line,value:row=>row.plot[line.key]})),overlayState.grain);deepHover(f,rows,x,row=>({title:dayLabel(row.day)+(overlayState.grain");
-adapt("for(const line of model.lines){const item=element", "thresholds.configure(model);for(const line of model.lines){const item=element");
+adapt("for(const line of model.lines){const item=element", "thresholds.configure(model);renderReadCycleNotice(document,model,s,DATA.read_cycle);for(const line of model.lines){const item=element");
 adapt("item.title=line.description;legend.append(item)", "item.title=line.description;const thresholdLabel=thresholds.legend(line,model,swatch);if(thresholdLabel)item.append(document.createTextNode(thresholdLabel));legend.append(item)");
 adapt("r:2.2,fill:line.color,'clip-path'", "r:2.2,fill:line.color,'data-overlay-point':line.key,'clip-path'");
 script=theme(script);
-const bootstrap = `import markup from './report-template.html?raw';\nimport { createAnalyticsHost } from './runtime-host.js';\nimport { restoreAnalyticsView } from './runtime-state.js';\nimport { createMovingAverageRuntime } from './moving-average-runtime.js';\nimport { createMeetingChartBridge } from './meetings/chart-bridge.js';\nimport { recordMeetingPlot } from './meetings/chart-geometry.js';\nimport { createOverlayThresholds } from './overlay-thresholds.js';\nexport function mountPersonalAnalytics(host,payload,options={}) {\nconst lifecycle=createAnalyticsHost(host,markup,options);\nconst {document,window,ResizeObserver,MutationObserver,URL,setTimeout}=lifecycle;\nconst {initCustomControls,syncCustomControls,applyAppPresentation}=lifecycle;\ntry {\nfunction drawOverlay(s){drawOverlayContent(s);applyAppPresentation();meetingTimelines.sync(s,averages.getState());}\nfunction render(){renderReportContent();meetingTimelines.sync(calc(),averages.getState());}\nfunction overlayModel(s,settings=overlayState){const model=overlayModelContent(s,settings);return settings===overlayState?averages.overlay(model):model;}\nfunction drawCompactLine(s,id,lines,config){const prepared=averages.compact(s,id,lines);drawCompactLineContent(prepared.s,id,prepared.lines,config);}\n`;
+const bootstrap = `import markup from './report-template.html?raw';\nimport { createAnalyticsHost } from './runtime-host.js';\nimport { restoreAnalyticsView } from './runtime-state.js';\nimport { createMovingAverageRuntime } from './moving-average-runtime.js';\nimport { createMeetingChartBridge } from './meetings/chart-bridge.js';\nimport { recordMeetingPlot } from './meetings/chart-geometry.js';\nimport { createOverlayThresholds } from './overlay-thresholds.js';\nimport { readCycleMetrics, readCycleSeries, weightedReadCycleWeek, isReadCycle, readCycleMeaning, readCycleCSV, renderReadCycleNotice } from './read-cycle.js';\nexport function mountPersonalAnalytics(host,payload,options={}) {\nconst lifecycle=createAnalyticsHost(host,markup,options);\nconst {document,window,ResizeObserver,MutationObserver,URL,setTimeout}=lifecycle;\nconst {initCustomControls,syncCustomControls,applyAppPresentation}=lifecycle;\ntry {\nfunction drawOverlay(s){drawOverlayContent(s);applyAppPresentation();meetingTimelines.sync(s,averages.getState());}\nfunction render(){renderReportContent();meetingTimelines.sync(calc(),averages.getState());}\nfunction overlayModel(s,settings=overlayState){const model=overlayModelContent(s,settings);return settings===overlayState?averages.overlay(model):model;}\nfunction drawCompactLine(s,id,lines,config){const prepared=averages.compact(s,id,lines);drawCompactLineContent(prepared.s,id,prepared.lines,config);}\n`;
 const ending = `\nreturn {api:window.reportAPI,getState:()=>window.reportAPI.getState(),getOverlayState:()=>window.reportAPI.getOverlayState(),getAverageState:()=>averages.getState(),getThresholdState:()=>thresholds.getState(),summary:()=>window.reportSummary,destroy:()=>lifecycle.destroy()};\n} catch (error) { lifecycle.destroy(); throw error; }\n}\n`;
 await writeFile(resolve(target, 'report-template.html'), markup.split('\n').map(line=>line.trimEnd()).join('\n').trimEnd()+'\n');
 await writeFile(resolve(target, 'report-base.css'), css.trimEnd()+'\n');

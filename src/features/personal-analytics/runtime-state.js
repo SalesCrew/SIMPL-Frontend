@@ -14,7 +14,7 @@ export function restoreAnalyticsView({state,overlayState,data,weeks,projects,doc
  for(const [id,key]of [['from-week','from'],['to-week','to'],['project-filter','project'],['progress-mode','progressMode'],['history-start','historyStart'],['task-search','search']])byId(id).value=state[key];
  byId('exclude-special').checked=state.excludeSpecial;byId('show-raw').checked=state.showRaw;
  for(const button of document.querySelectorAll('[data-preset]'))button.classList.toggle('active',button.dataset.preset===preset);
- const allowed=['pace28','incomingPace','median8','open','openOld','cumulative','count','mean14','phaseChange','flowRatio','cohort7','cohort14','cohort28'];
+ const allowed=['readCycleDaily','readCycle28','pace28','incomingPace','median8','open','openOld','cumulative','count','mean14','phaseChange','flowRatio','cohort7','cohort14','cohort28'];
  if(Array.isArray(overlay.selected))overlayState.selected=[...new Set(overlay.selected.filter(k=>allowed.includes(k)))];
  if(['native','normalized'].includes(overlay.scale))overlayState.scale=overlay.scale;
  if(['day','week'].includes(overlay.grain))overlayState.grain=overlay.grain;
