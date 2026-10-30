@@ -35,28 +35,34 @@
 .threshold-actions .threshold-apply{padding:9px 17px;background:#426b53;color:#fff;font-weight:500}
 .threshold-actions .threshold-apply:hover:not(:disabled){background:#365a44}
 .personal-productivity .personal-threshold-status{margin:0 22px 9px;font:9px var(--font-ui);color:#718498;line-height:1.9}
-.personal-productivity .personal-threshold-occupancy{width:calc(100% - 44px);max-width:640px;margin:13px 22px 17px auto;font:10px/1.65 var(--font-ui);color:#6c7d73}
-.personal-productivity .personal-threshold-occupancy[hidden],.personal-productivity .threshold-occupancy-row[hidden]{display:none}
-.threshold-occupancy-heading{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:3px 16px;padding-bottom:7px;border-bottom:1px solid #e9eee9}
-.personal-productivity .threshold-occupancy-heading h3{font-size:11px;font-weight:500;letter-spacing:0;color:#526c5b}
-.threshold-occupancy-heading>span{font-size:9px;color:#87948b}
-.threshold-occupancy-list{max-height:330px;overflow:auto;scrollbar-width:thin;scrollbar-color:#c3cec380 transparent}
-.threshold-occupancy-list::-webkit-scrollbar{width:3px;height:3px}.threshold-occupancy-list::-webkit-scrollbar-thumb{background:#c3cec380;border-radius:3px}
-.threshold-occupancy-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:5px 14px;padding:10px 0;border-bottom:1px solid #eff2ee}
-.threshold-occupancy-identity{min-width:0}.threshold-occupancy-label{display:flex;gap:7px;align-items:baseline;color:#5b6f63;font-size:10px}
-.threshold-occupancy-label svg{width:22px;height:6px;flex:0 0 22px;align-self:center}.threshold-occupancy-label>span{overflow-wrap:anywhere}
-.threshold-occupancy-reference{display:block;margin:3px 0 0 29px;color:#88958b;font-size:9px;line-height:1.7}
-.threshold-occupancy-values{display:flex;align-items:baseline;justify-content:flex-end;flex-wrap:wrap;gap:3px 13px;font-variant-numeric:tabular-nums;font-weight:500;font-size:12px}
-.threshold-occupancy-values>span{white-space:nowrap}.threshold-occupancy-values .is-above{color:#2b805e}.threshold-occupancy-values .is-below{color:#b35961}.threshold-occupancy-values .is-equal{color:#7d8891;font-size:10px}
-.threshold-occupancy-bar{display:flex;grid-column:1/-1;height:3px;margin-left:29px;overflow:hidden;border-radius:2px;background:#f0f3ef}
+.personal-productivity .overlay-tools.has-threshold-occupancy{display:grid;grid-template-columns:minmax(180px,1fr) minmax(180px,1fr) minmax(140px,.7fr) minmax(280px,1.15fr);gap:16px;align-items:end}
+.personal-productivity .overlay-tools.has-threshold-occupancy .field{min-width:0;max-width:none;width:100%}
+.personal-productivity .overlay-tools.has-threshold-occupancy .comparison-check{min-width:0;align-self:center}
+.personal-productivity .personal-threshold-occupancy{min-width:0;margin:0;padding:0;font:10px/1.6 var(--font-ui);color:#6c7d73;align-self:center}
+.personal-productivity .personal-threshold-occupancy[hidden]{display:none}
+.threshold-occupancy-mini-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:9px;color:#829080;margin-bottom:2px}
+.personal-productivity .threshold-occupancy-details-trigger{display:inline-flex;align-items:center;gap:3px;padding:0;border:0;background:transparent;color:#6e876d;font:9px/1.7 var(--font-ui);cursor:pointer;white-space:nowrap}
+.threshold-occupancy-mini-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:9px;min-height:19px}
+.threshold-occupancy-label{display:flex;min-width:0;gap:6px;align-items:baseline;color:#5b6f63;font-size:10px;line-height:1.65}
+.threshold-occupancy-label svg{width:18px;height:6px;flex:0 0 18px;align-self:center}
+.threshold-occupancy-mini-row .threshold-occupancy-label>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.threshold-occupancy-values{display:flex;align-items:baseline;justify-content:flex-end;gap:9px;font-variant-numeric:tabular-nums;font-weight:500;font-size:10px}
+.threshold-occupancy-values>span{white-space:nowrap}.threshold-occupancy-values .is-above{color:#2b805e}.threshold-occupancy-values .is-below{color:#b35961}.threshold-occupancy-values .is-equal{color:#7d8891;font-size:9px}
+.threshold-occupancy-empty{font-size:9px;color:#8b978e;max-width:170px;text-align:right;line-height:1.65}
+.threshold-occupancy-popover{z-index:125;width:min(510px,calc(100vw - 24px));max-height:min(620px,var(--radix-popover-content-available-height),calc(100dvh - 28px));overflow:auto;scrollbar-width:thin;scrollbar-color:#c3cec380 transparent;background:#fff;border:1px solid #e1e8df;border-radius:12px;box-shadow:0 8px 28px #354d321a;padding:16px;font:10px/1.8 var(--font-ui);color:#6c7d73;animation:personal-popover-in .12s ease-out}
+.threshold-occupancy-popover-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:5px}.threshold-occupancy-popover-heading strong{font-size:12px;font-weight:500;color:#526c5b}.threshold-occupancy-popover-heading p{font-size:9px;color:#8b978b;margin:3px 0 0}.threshold-occupancy-popover-heading button{flex:0 0 24px;width:24px;height:24px;display:grid;place-items:center;border:0;border-radius:5px;background:transparent;color:#94a08e;cursor:pointer}
+.threshold-occupancy-detail-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:5px 14px;padding:12px 0;border-bottom:1px solid #edf1eb}
+.threshold-occupancy-detail-row .threshold-occupancy-label>span{overflow-wrap:anywhere}
+.threshold-occupancy-detail-row .threshold-occupancy-values{flex-wrap:wrap;gap:4px 10px}
+.threshold-occupancy-reference{grid-column:1/-1;margin:0 0 0 24px;color:#88958b;font-size:9px;line-height:1.7}
+.threshold-occupancy-bar{display:flex;grid-column:1/-1;height:2px;margin-left:24px;overflow:hidden;border-radius:2px;background:#f0f3ef}
 .threshold-occupancy-bar i{height:100%;flex-shrink:0}.threshold-occupancy-bar .is-above{background:#80b299}.threshold-occupancy-bar .is-below{background:#d3a1a5}.threshold-occupancy-bar .is-equal{background:#b9c2ca}
-.threshold-occupancy-empty{font-size:9px;color:#8b978e;max-width:160px;text-align:right}
-.personal-productivity .threshold-occupancy-more{display:block;margin:7px 0 0 auto;padding:3px 0;font:10px/1.8 var(--font-ui);color:#607d68;cursor:pointer}
-.personal-productivity .threshold-occupancy-more:focus-visible,.personal-productivity .threshold-occupancy-method summary:focus-visible{outline:1px solid #a5b9a8;outline-offset:2px;border-radius:2px}
-.threshold-occupancy-method{margin-top:7px;font-size:9px;color:#87948b}.threshold-occupancy-method summary{width:max-content;max-width:100%;margin-left:auto;cursor:pointer}
-.personal-productivity .threshold-occupancy-method p{margin:7px 0 0;line-height:1.9;color:#7d8e80}
-@media(max-width:750px){.personal-productivity .personal-threshold-occupancy{width:calc(100% - 34px);margin-left:17px;margin-right:17px;max-width:none}}
-@media(max-width:480px){.threshold-occupancy-row{grid-template-columns:minmax(0,1fr);gap:6px}.threshold-occupancy-values{justify-content:flex-start;margin-left:29px}.threshold-occupancy-empty{max-width:none;margin-left:29px;text-align:left}.threshold-occupancy-heading>span{font-size:8px}}
+.threshold-occupancy-method{margin-top:12px;font-size:9px;color:#87948b}.threshold-occupancy-method summary{width:max-content;max-width:100%;cursor:pointer}.threshold-occupancy-method p{margin:7px 0 0;line-height:1.9;color:#7d8e80}
+.personal-productivity .threshold-occupancy-details-trigger:focus-visible,.threshold-occupancy-popover button:focus-visible,.threshold-occupancy-method summary:focus-visible{outline:1px solid #a5b9a8;outline-offset:2px;border-radius:2px}
+@media(max-width:1050px){.personal-productivity .overlay-tools.has-threshold-occupancy{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 20px}}
+@media(max-width:600px){.personal-productivity .overlay-tools.has-threshold-occupancy{grid-template-columns:minmax(0,1fr);gap:12px}.threshold-occupancy-detail-row{grid-template-columns:minmax(0,1fr)}.threshold-occupancy-detail-row .threshold-occupancy-values{justify-content:flex-start;margin-left:24px}}
+@media(prefers-reduced-motion:reduce){.threshold-occupancy-popover{animation:none}}
+@media print{.threshold-occupancy-popover{display:none!important}}
 .personal-productivity .personal-read-cycle-coverage{margin:8px 22px 13px;padding:11px 13px;border-radius:9px;background:#f5f8f3;color:#788a70;font:10px/1.85 var(--font-ui)}
 .personal-productivity .personal-read-cycle-coverage[hidden]{display:none}
 .personal-productivity .personal-read-cycle-cadence{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 16px;margin:5px 22px 12px;font:10px/1.8 var(--font-ui);color:#7d8e75}

@@ -59,6 +59,7 @@ export interface AnalyticsMountOptions {
   onRefresh: () => void;
   onMeetingCharts?: (charts: import("./meetings/types").MeetingChartLayout[], panel: HTMLElement | null) => void;
   mountThresholds: (slot: HTMLElement, model: ThresholdControlModel, onChange: (value: ThresholdSettings) => void) => { update: (model: ThresholdControlModel) => void; destroy: () => void };
+  mountThresholdOccupancy?: (slot: HTMLElement, model: ThresholdOccupancyModel) => { update: (model: ThresholdOccupancyModel) => void; destroy: () => void };
   mountSelect: (slot: HTMLElement, select: HTMLSelectElement, label: string) => MountedControl;
   mountInfo: (slot: HTMLElement, content: string, label: string) => MountedControl;
   mountMovingAverage: (slot: HTMLElement, model: AverageControlModel, onChange: (settings: AverageSettings) => void, onExport: () => void) => AverageMountedControl;
@@ -77,3 +78,5 @@ export interface DatasetReference { value: number; original: number; n: number; 
 export interface ThresholdRule { value: number; sources: string[]; reference?: { source: string; period: "28d" | "visible" } }
 export interface ThresholdSettings { rules: Record<string, ThresholdRule>; backgroundKey: string | null; backgrounds?: { native?: string | null; normalized?: string | null } }
 export interface ThresholdControlModel { axes: { key: string; side: string; label: string; unit: string; rule: ThresholdRule | null; lines: { key: string; label: string; references?: { "28d": DatasetReference | null; visible: DatasetReference | null } }[] }[]; settings: ThresholdSettings; activeCount: number; normalized: boolean }
+export interface ThresholdOccupancyEntry { key: string; label: string; color: string; pattern: string; reference: string; coverage: string; note: string; empty: string; percentages: { above: number; below: number; equal: number } | null }
+export interface ThresholdOccupancyModel { range: string; entries: ThresholdOccupancyEntry[]; method: string }

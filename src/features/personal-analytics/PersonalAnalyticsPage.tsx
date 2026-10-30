@@ -8,7 +8,8 @@ import { fetchPersonalAnalytics, PersonalAnalyticsError } from "./api";
 import { mountPersonalAnalytics } from "./report-runtime.js";
 import { MovingAverageControl } from "./MovingAverageControl";
 import { ThresholdControl } from "./ThresholdControl";
-import type { ThresholdControlModel, ThresholdSettings } from "./types";
+import { ThresholdOccupancySummary } from "./ThresholdOccupancySummary";
+import type { ThresholdControlModel, ThresholdSettings, ThresholdOccupancyModel } from "./types";
 import { MeetingContext } from "./meetings/MeetingContext";
 import { PersonalAnalyticsSkeleton } from "./PersonalAnalyticsSkeleton";
 import type { MeetingChartLayout } from "./meetings/types";
@@ -40,6 +41,11 @@ function thresholdControl(slot: HTMLElement, initial: ThresholdControlModel, onC
   const update = (model: ThresholdControlModel) => { if (!destroyed) root.render(<ThresholdControl model={model} onChange={onChange} />); };
   update(initial); return { update, destroy: () => { if (destroyed) return; destroyed = true; queueMicrotask(() => root.unmount()); } };
 }
+function thresholdOccupancyControl(slot: HTMLElement, initial: ThresholdOccupancyModel) {
+  const root = createRoot(slot); let destroyed = false;
+  const update = (model: ThresholdOccupancyModel) => { if (!destroyed) root.render(<ThresholdOccupancySummary model={model} />); };
+  update(initial); return { update, destroy: () => { if (destroyed) return; destroyed = true; queueMicrotask(() => root.unmount()); } };
+}
 export default function PersonalAnalyticsPage({ actorId, revision }: { actorId: string; revision?: number }) {
   const host = useRef<HTMLDivElement>(null), engine = useRef<AnalyticsHandle | null>(null);
   const previousView = useRef<AnalyticsViewSnapshot | undefined>(undefined);
@@ -68,7 +74,7 @@ export default function PersonalAnalyticsPage({ actorId, revision }: { actorId: 
     if (!allowed || !payload || !host.current) return;
     const element = host.current;
     try {
-      const mounted = mountPersonalAnalytics(element, payload, { initialView: previousView.current, earliestMeetingDate, snapshotAt: payload.meta.snapshot_at, completedCount: payload.tasks.length, openCount: payload.flow_tasks.filter(t => !t.completed_at).length, archiveFallbackCount: payload.meta.archive_fallback_cards, onRefresh: () => refresh.current(), mountSelect: selectControl, mountInfo: infoControl, mountMovingAverage: averageControl, mountThresholds: thresholdControl, onMeetingCharts: (charts, panel) => setMeetingLayout(previous => previous.panel === panel && previous.charts.length === charts.length && charts.every((chart, i) => Object.entries(chart).every(([key, value]) => previous.charts[i][key as keyof MeetingChartLayout] === value)) ? previous : { charts, panel }) });
+      const mounted = mountPersonalAnalytics(element, payload, { initialView: previousView.current, earliestMeetingDate, snapshotAt: payload.meta.snapshot_at, completedCount: payload.tasks.length, openCount: payload.flow_tasks.filter(t => !t.completed_at).length, archiveFallbackCount: payload.meta.archive_fallback_cards, onRefresh: () => refresh.current(), mountSelect: selectControl, mountInfo: infoControl, mountMovingAverage: averageControl, mountThresholds: thresholdControl, mountThresholdOccupancy: thresholdOccupancyControl, onMeetingCharts: (charts, panel) => setMeetingLayout(previous => previous.panel === panel && previous.charts.length === charts.length && charts.every((chart, i) => Object.entries(chart).every(([key, value]) => previous.charts[i][key as keyof MeetingChartLayout] === value)) ? previous : { charts, panel }) });
       engine.current = mounted;
       return () => { previousView.current = { state: mounted.getState(), overlay: mounted.getOverlayState(), averages: mounted.getAverageState(), thresholds: mounted.getThresholdState?.(), preset: element.querySelector<HTMLButtonElement>('[data-preset].active')?.dataset.preset }; mounted.destroy(); if (engine.current === mounted) engine.current = null; };
     } catch { element.replaceChildren(); setPayload(null); setMountError("Die Darstellung konnte nicht geladen werden. Bitte erneut versuchen."); }

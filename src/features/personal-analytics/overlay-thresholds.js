@@ -43,7 +43,7 @@ export function thresholdPatterns(model, state) {
 const green = '#2b8a64', red = '#c15c65';
 export function createOverlayThresholds({ document, options, lifecycle, redraw }) {
   let state = cleanThresholdState(options.initialView?.thresholds), control, status, mode='native';
-  const occupancy = createThresholdOccupancy(document);
+  const occupancy = createThresholdOccupancy({ document, options, lifecycle });
   const number = value => new Intl.NumberFormat('de-AT', { maximumFractionDigits: 4 }).format(value);
   const side = axis => axis.side === 'right' ? 'Rechte Y-Achse' : 'Linke Y-Achse';
   function controlModel(model) {
