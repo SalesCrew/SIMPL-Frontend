@@ -1,5 +1,6 @@
 // Visual reference rules only: no changes to data, aggregation, domains or correlations.
 import { datasetReference } from './read-cycle.js';
+import { createThresholdOccupancy } from './threshold-occupancy.js';
 export const thresholdKey = (model, axis) => `${axis.side}:${model.normalized ? 'normalized' : axis.family}`;
 export function cleanThresholdState(value) {
   const rules = {};
@@ -42,6 +43,7 @@ export function thresholdPatterns(model, state) {
 const green = '#2b8a64', red = '#c15c65';
 export function createOverlayThresholds({ document, options, lifecycle, redraw }) {
   let state = cleanThresholdState(options.initialView?.thresholds), control, status, mode='native';
+  const occupancy = createThresholdOccupancy(document);
   const number = value => new Intl.NumberFormat('de-AT', { maximumFractionDigits: 4 }).format(value);
   const side = axis => axis.side === 'right' ? 'Rechte Y-Achse' : 'Linke Y-Achse';
   function controlModel(model) {
@@ -67,6 +69,12 @@ export function createOverlayThresholds({ document, options, lifecycle, redraw }
       return `${axis.side === 'right' ? 'R' : 'L'}: ${rule.reference ? 'Ø-Referenz · ' : ''}Grün ≥ ${number(rule.value)} ${unit}, Rot darunter${thresholdBackground(model,state) === key ? ' · mit Fläche' : ''}${rule.resolvedReference ? ' · '+rule.resolvedReference.note : ''}`;
     }).join('  /  ');
     status.hidden = !active.length;
+    const patterns = thresholdPatterns(model, state), backgroundKey = thresholdBackground(model,state);
+    occupancy.render(model, model.lines.flatMap(line => {
+      const axis = model.axes[line.axis], key = axis && thresholdKey(model,axis);
+      const rule = thresholdForLine(model, state, line) || (key === backgroundKey ? { ...resolvedThresholdRule(model,state,key), axis, key } : null);
+      return rule ? [{ line, rule, pattern: patterns.get(line.key) }] : [];
+    }));
   }
   function legend(line, model, swatch) {
     const rule = thresholdForLine(model, state, line);
