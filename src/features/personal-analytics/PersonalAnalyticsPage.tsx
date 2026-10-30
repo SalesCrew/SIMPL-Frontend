@@ -10,6 +10,7 @@ import { MovingAverageControl } from "./MovingAverageControl";
 import { ThresholdControl } from "./ThresholdControl";
 import type { ThresholdControlModel, ThresholdSettings } from "./types";
 import { MeetingContext } from "./meetings/MeetingContext";
+import { PersonalAnalyticsSkeleton } from "./PersonalAnalyticsSkeleton";
 import type { MeetingChartLayout } from "./meetings/types";
 import type { AnalyticsHandle, AnalyticsViewSnapshot, AverageControlModel, AverageMountedControl, AverageSettings, MountedControl, PersonalAnalyticsPayload } from "./types";
 import "./report-base.css";
@@ -73,7 +74,8 @@ export default function PersonalAnalyticsPage({ actorId, revision }: { actorId: 
     } catch { element.replaceChildren(); setPayload(null); setMountError("Die Darstellung konnte nicht geladen werden. Bitte erneut versuchen."); }
   }, [payload, allowed, earliestMeetingDate]);
   if (!allowed) return <section className="personal-load-state"><h1>Seite nicht gefunden.</h1></section>;
-  if ((!payload && loading) || mountError || (!payload && error)) return <section className="personal-load-state" role={error || mountError ? "alert" : "status"}><span className="personal-load-icon">{error || mountError ? <CircleHelp size={24} /> : <LoaderCircle size={24} className="spin" />}</span><h1>{error || mountError ? "Gerade nicht verfügbar." : "Dein Fortschritt wird geladen."}</h1><p>{error || mountError || "Deine Development-Daten werden sicher abgerufen."}</p>{(error || mountError) && <button type="button" className="secondary" onClick={() => setAttempt(n => n + 1)}><RefreshCw size={14} />Erneut versuchen</button>}</section>;
+  if (mountError || (!payload && error)) return <section className="personal-load-state" role="alert"><span className="personal-load-icon"><CircleHelp size={24} /></span><h1>Gerade nicht verfügbar.</h1><p>{error || mountError}</p><button type="button" className="secondary" onClick={() => setAttempt(n => n + 1)}><RefreshCw size={14} />Erneut versuchen</button></section>;
+  if (!payload) return <PersonalAnalyticsSkeleton />;
   return <section className="personal-analytics-page" aria-label="Persönlicher Fortschritt" aria-busy={loading}>
     {(error || loading) && <div className={`personal-refresh-status${error ? " is-error" : ""}`} role="status">{loading ? <><LoaderCircle size={12} className="spin" />Daten werden aktualisiert</> : <>{error}<button type="button" onClick={() => setAttempt(n => n + 1)}>Erneut versuchen</button></>}</div>}
     <div ref={host} className="personal-productivity" data-personal-analytics-root />

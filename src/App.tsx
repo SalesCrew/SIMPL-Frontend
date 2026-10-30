@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import {
   LayoutGrid,
@@ -62,9 +62,11 @@ import {
   withoutCardDeepLink,
 } from "./card-deep-link";
 
-import { canRequestPersonalAnalytics, initiallyRequestedPersonalAnalytics, writePersonalAnalyticsLocation } from "./features/personal-analytics/access";
+import { initialAppView, writeAppViewLocation, type AppView } from "./app-navigation";
+import { canRequestPersonalAnalytics } from "./features/personal-analytics/access";
 import { usePersonalAnalyticsAccess } from "./features/personal-analytics/usePersonalAnalyticsAccess";
 import { PersonalAnalyticsEntry } from "./features/personal-analytics/PersonalAnalyticsEntry";
+import { PersonalAnalyticsSkeleton } from "./features/personal-analytics/PersonalAnalyticsSkeleton";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -152,12 +154,17 @@ function Login() {
 export default function App() {
   const w = useWorkspace();
   const [deepLinkCardId, setDeepLinkCardId] = useState(initialCardDeepLink);
-  const directPersonalRequest = useRef(initiallyRequestedPersonalAnalytics());
+  const requestedView = useRef(initialAppView());
+  const hasOpenedAccount = useRef(false);
   const analyticsActor = !demoMode && w.passwordGate === "ready" && w.current?.active && w.user?.id === w.current.id && canRequestPersonalAnalytics(w.current.id) ? w.current.id : null;
   const analyticsAccess = usePersonalAnalyticsAccess(analyticsActor, w.state?.access_revision?.authorization_version);
   const initialActor = useRef<string | null>(null);
   const previousWorkspace = useRef<string | null>(null);
-  const [view, setView] = useState<"board" | "mine" | "done" | "team" | "archive" | "docs" | "analytics">("board");
+  const [view, setView] = useState<AppView>(requestedView.current);
+  const changeView = useCallback((next: AppView) => {
+    writeAppViewLocation(next);
+    setView(next);
+  }, []);
   const [workspaceEditor, setWorkspaceEditor] = useState<{
     workspace?: Workspace;
   } | null>(null);
@@ -204,13 +211,18 @@ export default function App() {
     return () => window.removeEventListener("keydown", handler);
   }, []);
   useEffect(() => {
-    if (w.current?.role !== "admin" && view === "team") setView("board");
-  }, [w.current?.role, view]);
+    if (w.current && w.current.role !== "admin" && view === "team") changeView("board");
+  }, [w.current?.role, view, changeView]);
   useEffect(() => {
     const id = w.current?.id || null;
     const firstForAccount = id !== initialActor.current;
-    if (firstForAccount) setView(directPersonalRequest.current || (!demoMode && canRequestPersonalAnalytics(id)) ? "analytics" : "board");
-    else if (previousWorkspace.current !== (w.activeWorkspaceId || null)) setView("board");
+    if (firstForAccount) {
+      if (id) {
+        const firstView = hasOpenedAccount.current ? "board" : requestedView.current;
+        hasOpenedAccount.current = true;
+        changeView(firstView === "team" && w.current?.role !== "admin" ? "board" : firstView);
+      } else changeView("board");
+    } else if (id && previousWorkspace.current !== (w.activeWorkspaceId || null)) changeView("board");
     initialActor.current = id;
     previousWorkspace.current = w.activeWorkspaceId || null;
     setProjectFilter("");
@@ -232,7 +244,7 @@ export default function App() {
     setWorkspaceEditor(null);
     setProfileEditor(null);
     setShowLabels(false);
-  }, [w.current?.id, w.activeWorkspaceId]);
+  }, [w.current?.id, w.activeWorkspaceId, changeView]);
   useEffect(() => {
     if (!deepLinkCardId || !w.state || !w.current?.active) return;
     const target = cardDeepLinkTarget(w.state.cards, deepLinkCardId);
@@ -250,7 +262,7 @@ export default function App() {
       w.selectWorkspace(target.workspaceId);
       return;
     }
-    setView(target.archived ? "archive" : "board");
+    changeView(target.archived ? "archive" : "board");
     setCardEditor({
       id: target.id,
       session: target.archived ? undefined : w.beginCardEdit(target.id),
@@ -305,8 +317,6 @@ export default function App() {
         </button>
       </main>
     );
-  if (analyticsActor && !deepLinkCardId && ((view === "analytics" && analyticsAccess.status === "checking") || initialActor.current !== analyticsActor))
-    return <AccessLoading message="Dein persönlicher Bereich wird geprüft" />;
   const { current, mutate, busy } = w;
   const allState = w.state;
   const state = workspaceBoard(allState, w.activeWorkspaceId);
@@ -374,8 +384,7 @@ export default function App() {
   };
   const navigate = (next: typeof view, project = "") => {
     if (next === "analytics" && analyticsAccess.status !== "allowed") return;
-    writePersonalAnalyticsLocation(next === "analytics");
-    setView(next);
+    changeView(next);
     resetFilters();
     setProjectFilter(project);
   };
@@ -590,7 +599,7 @@ export default function App() {
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
-                    if (view === "team") setView("board");
+                    if (view === "team") changeView("board");
                   }}
                 />
                 <kbd>⌘ K</kbd>
@@ -727,7 +736,7 @@ export default function App() {
               )}
             </section>
           )}
-          {view === "analytics" ? analyticsAccess.status === "allowed" && analyticsActor ? <PersonalAnalyticsEntry actorId={analyticsActor} revision={allState.access_revision?.board_version} /> : <section className="personal-entry-state" role={analyticsActor ? "alert" : undefined}><h1>{analyticsActor ? "Dein Bereich ist gerade nicht erreichbar." : "Seite nicht gefunden."}</h1>{analyticsActor && <button type="button" className="secondary" onClick={analyticsAccess.retry}><RefreshCw size={14} />Erneut versuchen</button>}<button type="button" className="secondary" onClick={() => navigate("board")}>Zum Taskboard</button></section> : view === "docs" ? <DocsPage search={search} onSearchChange={setSearch} /> : <>
+          {view === "analytics" ? analyticsActor && analyticsAccess.status === "checking" ? <PersonalAnalyticsSkeleton /> : analyticsAccess.status === "allowed" && analyticsActor ? <PersonalAnalyticsEntry actorId={analyticsActor} revision={allState.access_revision?.board_version} /> : <section className="personal-entry-state" role={analyticsActor ? "alert" : undefined}><h1>{analyticsActor ? "Dein Bereich ist gerade nicht erreichbar." : "Seite nicht gefunden."}</h1>{analyticsActor && <button type="button" className="secondary" onClick={analyticsAccess.retry}><RefreshCw size={14} />Erneut versuchen</button>}<button type="button" className="secondary" onClick={() => navigate("board")}>Zum Taskboard</button></section> : view === "docs" ? <DocsPage search={search} onSearchChange={setSearch} /> : <>
           {view === "team" && admin && boardHeading}
           {view === "team" && admin ? (
             <div className="team-page">

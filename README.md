@@ -20,7 +20,7 @@ The companion API is [SIMPL-Backend](https://github.com/SalesCrew/SIMPL-Backend)
 
 ## Private Development analytics
 
-The verified owner's account opens `Dein Fortschritt` by default. The navigation sits immediately above `Team & Zugänge`. The API independently verifies the owner, active account and existing workspace permissions; client visibility alone grants no access. Deploy the companion backend endpoint before this frontend.
+An ordinary app URL opens the Taskboard for every account. Navigation stores the selected page in the URL, so refreshing keeps that page; explicit `?view=insights` and meeting links still work. The verified owner's `Dein Fortschritt` navigation sits immediately above `Team & Zugänge`. Its permission check, lazy page download and initial data fetch share a responsive dashboard skeleton while the application navigation remains usable. The API independently verifies the owner, active account and existing workspace permissions; client visibility alone grants no access. Deploy the companion backend endpoint before this frontend.
 
 `src/features/personal-analytics` contains the isolated report runtime, SIMPL controls and per-chart moving averages. Data is fetched at runtime with the current user's session and is never bundled or persisted in browser storage. UI selections survive a snapshot refresh only in memory. Tick windows average complete, consecutive displayed day/week/month intervals; missing and partial intervals stay blank. Normalized averages use their original source's domain. Relationship analysis continues to use original metrics.
 

@@ -1,6 +1,7 @@
 import { Component, lazy, Suspense, type ReactNode } from "react";
-import { LoaderCircle, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { canRequestPersonalAnalytics } from "./access";
+import { PersonalAnalyticsSkeleton } from "./PersonalAnalyticsSkeleton";
 const PersonalAnalyticsPage = lazy(() => import("./PersonalAnalyticsPage"));
 class AnalyticsBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
@@ -12,5 +13,5 @@ class AnalyticsBoundary extends Component<{ children: ReactNode }, { failed: boo
 }
 export function PersonalAnalyticsEntry({ actorId, revision }: { actorId: string; revision?: number }) {
   if (!canRequestPersonalAnalytics(actorId)) return null;
-  return <AnalyticsBoundary><Suspense fallback={<section className="personal-entry-state" role="status"><LoaderCircle size={23} className="spin" /><p>Dein Fortschritt wird geladen.</p></section>}><PersonalAnalyticsPage actorId={actorId} revision={revision} /></Suspense></AnalyticsBoundary>;
+  return <AnalyticsBoundary><Suspense fallback={<PersonalAnalyticsSkeleton />}><PersonalAnalyticsPage actorId={actorId} revision={revision} /></Suspense></AnalyticsBoundary>;
 }
