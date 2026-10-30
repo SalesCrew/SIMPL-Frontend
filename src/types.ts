@@ -41,7 +41,7 @@ export interface Profile {
   name: string;
   email: string;
   role: Role;
-  default_column_id: string | null;
+  default_column_id: string | null; // Legacy input only; accounts are workspace-bound.
   default_workspace_id: string;
   color: Color;
   active: boolean;
@@ -53,6 +53,7 @@ export interface Column {
   color: Color;
   kind: "project" | "work" | "done";
   position: number;
+  archived_at?: string | null;
 }
 export interface Label {
   id: string;

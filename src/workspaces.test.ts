@@ -134,13 +134,12 @@ describe("Multiple shared workspaces", () => {
       completed: true,
     });
     expect(done.cards[0].column_id).toBe("done");
-    expect(() =>
-      applyDemoAction(state, state.profiles[0], {
-        type: "profile.save",
-        profile: { ...member, default_column_id: "spark" },
-        isNew: false,
-      }),
-    ).toThrow("Standardprojekt");
+    const legacy = applyDemoAction(state, state.profiles[0], {
+      type: "profile.save",
+      profile: { ...member, default_column_id: "spark" },
+      isNew: false,
+    });
+    expect(legacy.profiles.find((profile) => profile.id === member.id)?.default_column_id).toBeNull();
   });
   it("upgrades old demos without losing cards, comments, projects or profile assignments", () => {
     const old = createSeed();

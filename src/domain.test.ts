@@ -172,8 +172,8 @@ describe("Shared board behavior", () => {
     const next = applyDemoAction(s, user, {
       type: "card.create",
       title: "  Neue Idee  ",
-      column_id: user.default_column_id!,
-      project_id: user.default_column_id!,
+      column_id: "spark",
+      project_id: "spark",
     });
     expect(next.cards.at(-1)).toMatchObject({
       title: "Neue Idee",
@@ -359,7 +359,7 @@ describe("Shared board behavior", () => {
     const s = createSeed();
     expect(() =>
       applyDemoAction(s, s.profiles[0], { type: "column.delete", id: "spark" }),
-    ).toThrow("verwendet");
+    ).toThrow("aktiven Karten");
     expect(() =>
       applyDemoAction(s, s.profiles[2], { type: "column.delete", id: "obi" }),
     ).toThrow("Administrator");

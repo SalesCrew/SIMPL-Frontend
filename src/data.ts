@@ -365,12 +365,7 @@ export async function runRemote(action: Action) {
       result = await db.from("columns").upsert(action.column);
       break;
     case "column.delete":
-      result = await db
-        .from("columns")
-        .delete()
-        .eq("id", action.id)
-        .select("id")
-        .single();
+      result = await db.rpc("archive_project", { p_project: action.id });
       break;
     case "label.save":
       result = await db.from("labels").upsert(action.label);

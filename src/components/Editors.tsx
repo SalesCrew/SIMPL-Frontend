@@ -111,14 +111,11 @@ export function CardEditor({
   const [title, setTitle] = useState(card?.title || "");
   const [description, setDescription] = useState(card?.description || "");
   const fallback =
-    state.columns.find(
-      (c) => c.id === current.default_column_id && c.kind === "project",
-    )?.id ||
-    state.columns.find((c) => c.kind === "project")?.id ||
+    state.columns.find((c) => c.kind === "project" && !c.archived_at)?.id ||
     "";
   const [columnId, setColumnId] = useState(
     card?.column_id ||
-      state.columns.find((c) => c.id === initialColumn && c.kind === "project")
+      state.columns.find((c) => c.id === initialColumn && c.kind === "project" && !c.archived_at)
         ?.id ||
       fallback,
   );
@@ -660,10 +657,7 @@ export function ColumnEditor({
   const [deleting, setDeleting] = useState(false);
   const used =
     !!column &&
-    (state.cards.some(
-      (c) => c.column_id === column.id || c.project_id === column.id,
-    ) ||
-      state.profiles.some((p) => p.default_column_id === column.id));
+    state.cards.some((c) => c.column_id === column.id && !c.archived_at && !c.deleted_at);
   return (
     <Dialog
       title={column ? "Spalte bearbeiten" : "Raum für ein neues Projekt."}
@@ -725,17 +719,17 @@ export function ColumnEditor({
               className="danger-button"
               disabled={used || busy}
               aria-label={
-                used ? "Spalte wird noch verwendet" : "Spalte löschen"
+                used ? "Projekt enthält aktive Karten" : "Projekt aus Board entfernen"
               }
               onClick={() => setDeleting(true)}
             >
-              Löschen
+              Entfernen
             </button>
           )}
         </div>
         {deleting && (
           <div className="inline-confirm">
-            <p>Diese leere Spalte löschen?</p>
+            <p>Dieses Projekt aus dem aktiven Board entfernen? Alle bisherigen Karten, Kommentare und historischen Zuordnungen bleiben erhalten.</p>
             <button
               type="button"
               className="danger-button"
@@ -748,14 +742,13 @@ export function ColumnEditor({
                   close();
               }}
             >
-              Endgültig löschen
+              Aus Board entfernen
             </button>
           </div>
         )}
         {used && (
           <p className="form-hint">
-            Zum Löschen zuerst alle Karten verschieben und Projektzuweisungen
-            entfernen. Projekte mit zugehörigen Karten bleiben erhalten.
+            Zuerst die aktiven Karten aus dieser Projektspalte verschieben. Karten in In Arbeit, Fertig und im Archiv sowie ihre historischen Zuordnungen bleiben erhalten.
           </p>
         )}
       </form>
@@ -870,7 +863,6 @@ export function ProfileEditor({
   const [role, setRole] = useState<Profile["role"]>(
     profile?.role || "mitarbeiter",
   );
-  const [project, setProject] = useState(profile?.default_column_id || "");
   const [workspaceId, setWorkspaceId] = useState(
     profile?.default_workspace_id || initialWorkspaceId,
   );
@@ -897,7 +889,7 @@ export function ProfileEditor({
                 email: email.trim().toLowerCase(),
                 role,
                 color,
-                default_column_id: project || null,
+                default_column_id: null,
                 default_workspace_id: workspaceId,
                 active,
               },
@@ -945,10 +937,7 @@ export function ProfileEditor({
           <Select
             label="Start-Workspace"
             value={workspaceId}
-            onValueChange={(id) => {
-              setWorkspaceId(id);
-              setProject("");
-            }}
+            onValueChange={setWorkspaceId}
             options={state.workspaces.map((w) => ({
               value: w.id,
               label: w.name,
@@ -975,27 +964,6 @@ export function ProfileEditor({
                   label: "Administrator",
                   description: "Zusätzlich Projekte und Zugänge verwalten",
                 },
-              ]}
-            />
-          </label>
-          <label className="field">
-            Standardprojekt
-            <Select
-              label="Standardprojekt"
-              value={project}
-              onValueChange={setProject}
-              options={[
-                { value: "", label: "Kein Standard" },
-                ...state.columns
-                  .filter(
-                    (c) =>
-                      c.kind === "project" && c.workspace_id === workspaceId,
-                  )
-                  .map((c) => ({
-                    value: c.id,
-                    label: c.name,
-                    icon: <i className={`select-color ${c.color}`} />,
-                  })),
               ]}
             />
           </label>

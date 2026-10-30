@@ -22,6 +22,12 @@ The companion API is [SIMPL-Backend](https://github.com/SalesCrew/SIMPL-Backend)
 
 The new-card form accepts selected files, dropped files and pasted screenshots before saving. These files stay local until submission; canceling an unsaved card creates no remote uploads. Saving creates the card first, then uploads through the existing authenticated attachment flow. The dialog closes after every selected attachment is confirmed. If an upload fails, the form keeps its files and retries against the same card, preserving completed uploads. The existing limits of 20 card attachments and 500 MB per file apply.
 
+## Workspace accounts and historical projects
+
+Accounts are assigned to a start workspace. The deprecated default-project field is no longer offered or persisted by account forms. Existing workspace/NDA rules and account roles remain in effect.
+
+Removing a project from the active board calls the authenticated `archive_project` RPC. Its row, name and ID remain available to archived cards, comments, attachments, meeting context and analytics. Projects must have no active cards in their own column before removal; tasks already in In Arbeit/Fertig and archived cards retain their original project. Removed projects remain selectable in archive filters. Reopening a completed task from a removed project routes it to the visible In Arbeit bucket. Apply the companion backend migration before deploying this frontend.
+
 ## Private Development analytics
 
 An ordinary app URL opens the Taskboard for every account. Navigation stores the selected page in the URL, so refreshing keeps that page; explicit `?view=insights` and meeting links still work. The verified owner's `Dein Fortschritt` navigation sits immediately above `Team & Zugänge`. Its permission check, lazy page download and initial data fetch share a responsive dashboard skeleton while the application navigation remains usable. The API independently verifies the owner, active account and existing workspace permissions; client visibility alone grants no access. Deploy the companion backend endpoint before this frontend.

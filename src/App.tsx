@@ -199,6 +199,10 @@ export default function App() {
   const [profileEditor, setProfileEditor] = useState<{
     profile?: Profile;
   } | null>(null);
+  useEffect(() => {
+    if (view !== "archive" && w.state?.columns.find((column) => column.id === projectFilter)?.archived_at)
+      setProjectFilter("");
+  }, [view, projectFilter, w.state?.columns]);
   const searchRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -505,20 +509,20 @@ export default function App() {
             </span>
             <nav aria-label="Projektfilter">
               {state.columns
-                .filter((c) => c.kind === "project")
+                .filter((c) => c.kind === "project" && (!c.archived_at || view === "archive"))
                 .sort((a, b) => a.position - b.position)
                 .map((c) => (
                   <button
                     className={`nav-item project-nav ${projectFilter === c.id ? "active" : ""}`}
                     key={c.id}
-                    onClick={() => navigate("board", c.id)}
+                    onClick={() => navigate(c.archived_at ? "archive" : "board", c.id)}
                   >
                     <i className={`dot ${c.color}`} />
                     {c.name}
                     <span className="subtle-count">
                       {
                         state.cards.filter(
-                          (t) => t.project_id === c.id && !t.completed_at && !t.archived_at,
+                          (t) => t.project_id === c.id && (view === "archive" ? !!t.archived_at : !t.completed_at && !t.archived_at),
                         ).length
                       }
                     </span>
@@ -776,12 +780,6 @@ export default function App() {
                           )?.name
                         }
                       </dd>
-                      <dt>Standardprojekt</dt>
-                      <dd>
-                        {allState.columns.find(
-                          (c) => c.id === p.default_column_id,
-                        )?.name || "Kein Standardprojekt"}
-                      </dd>
                       <dt>Status</dt>
                       <dd>{p.active ? "Aktiv" : "Deaktiviert"}</dd>
                     </dl>
@@ -983,7 +981,7 @@ export default function App() {
                         setCardEditor({ column: projectFilter || undefined })
                       }
                       disabled={
-                        !state.columns.some((c) => c.kind === "project")
+                        !state.columns.some((c) => c.kind === "project" && !c.archived_at)
                       }
                     >
                       <Plus size={17} />
@@ -1114,11 +1112,7 @@ export default function App() {
                         (workspace) =>
                           workspace.id === current.default_workspace_id,
                       )?.name
-                    }{" "}
-                    ·{" "}
-                    {allState.columns.find(
-                      (c) => c.id === current.default_column_id,
-                    )?.name || "Kein Standardprojekt"}
+                    }
                   </p>
                 </div>
               </div>

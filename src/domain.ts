@@ -66,7 +66,7 @@ export function orderedCards(state: BoardState, columnId: string) {
 }
 export function orderedColumns(columns: Column[]) {
   const rank = { project: 0, work: 1, done: 2 };
-  return [...columns].sort(
+  return columns.filter((column) => !column.archived_at).sort(
     (a, b) =>
       rank[a.kind] - rank[b.kind] ||
       a.position - b.position ||
@@ -120,6 +120,7 @@ export function restoreFixedBuckets(state: BoardState): BoardState {
     p.default_workspace_id ||=
       next.columns.find((col) => col.id === p.default_column_id)
         ?.workspace_id || first;
+    p.default_column_id = null;
   });
   for (const workspace of next.workspaces)
     for (const kind of ["work", "done"] as const) {
@@ -248,9 +249,10 @@ function returnLocation(state: BoardState, card: Card) {
     state.columns.find(
       (c) =>
         c.id === card.return_column_id &&
-        c.kind === "project" &&
+        c.kind === "project" && !c.archived_at &&
         c.workspace_id === card.workspace_id,
-    )?.id || card.project_id;
+    )?.id || state.columns.find((c) => c.id === card.project_id && !c.archived_at)?.id ||
+    state.columns.find((c) => c.workspace_id === card.workspace_id && c.kind === "work")?.id;
   if (!column) throw new Error("Diese archivierte Karte hat kein eindeutiges Ursprungsprojekt.");
   const cards = orderedCards(state, column).filter((c) => c.id !== card.id);
   if (cards.some((c) => c.id === card.return_before_id))
@@ -406,10 +408,10 @@ export function applyDemoAction(
         throw new Error("Bitte gib einen Kartentitel ein.");
       if (
         !s.columns.some(
-          (c) => c.id === action.column_id && c.kind === "project",
+          (c) => c.id === action.column_id && c.kind === "project" && !c.archived_at,
         ) ||
         !s.columns.some(
-          (c) => c.id === action.project_id && c.kind === "project",
+          (c) => c.id === action.project_id && c.kind === "project" && !c.archived_at,
         )
       )
         throw new Error("Bitte ein gültiges Projekt wählen.");
@@ -500,6 +502,7 @@ export function applyDemoAction(
       const c = card(action.id);
       const target = s.columns.find((col) => col.id === action.column_id);
       if (!target) throw new Error("Spalte nicht gefunden.");
+      if (target.archived_at) throw new Error("Dieses Projekt wurde aus dem aktiven Board entfernt.");
       if (target.workspace_id !== c.workspace_id)
         throw new Error(
           "Bitte eine Spalte aus dem Workspace dieser Karte wählen.",
@@ -718,19 +721,12 @@ export function applyDemoAction(
         throw new Error(
           "In Arbeit und Fertig sind feste Spalten und können nicht gelöscht werden.",
         );
-      if (
-        s.cards.some(
-          (c) =>
-            c.column_id === action.id ||
-            c.project_id === action.id ||
-            c.return_column_id === action.id,
-        ) ||
-        s.profiles.some((p) => p.default_column_id === action.id)
-      )
+      if (s.cards.some((c) => c.column_id === action.id && !c.archived_at && !c.deleted_at))
         throw new Error(
-          "Die Spalte wird noch von Karten oder Mitgliedern verwendet.",
+          "Bitte zuerst die aktiven Karten aus dieser Projektspalte verschieben.",
         );
-      s.columns = s.columns.filter((c) => c.id !== action.id);
+      s.columns = s.columns.map((c) => c.id === action.id ? { ...c, archived_at: c.archived_at || now } : c);
+      s.profiles = s.profiles.map((p) => p.default_column_id === action.id ? { ...p, default_column_id: null } : p);
       break;
     case "label.save":
       if (!action.label.name.trim()) throw new Error("Ein Name fehlt.");
@@ -759,17 +755,10 @@ export function applyDemoAction(
       if (
         !s.workspaces.some(
           (w) => w.id === action.profile.default_workspace_id,
-        ) ||
-        (action.profile.default_column_id &&
-          !s.columns.some(
-            (c) =>
-              c.id === action.profile.default_column_id &&
-              c.kind === "project" &&
-              c.workspace_id === action.profile.default_workspace_id,
-          ))
+        )
       )
         throw new Error(
-          "Bitte Workspace und passendes Standardprojekt wählen.",
+          "Bitte einen gültigen Workspace wählen.",
         );
       if (
         action.profile.id === actor.id &&
@@ -788,7 +777,7 @@ export function applyDemoAction(
         throw new Error("Diese E-Mail wird bereits verwendet.");
       s.profiles = [
         ...s.profiles.filter((p) => p.id !== action.profile.id),
-        action.profile,
+        { ...action.profile, default_column_id: null },
       ];
       break;
   }
