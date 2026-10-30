@@ -25,7 +25,7 @@ export function averageColumns(rows, sources, settings, grain) {
   const selected = settings.sources.includes('*') ? sources : sources.filter(source => settings.sources.includes(source.key));
   return selected.flatMap(source => settings.periods.map((period, index) => ({
     ...source, baseKey: source.key, key: 'ma:' + source.key + ':' + period, period, grain,
-    label: (source.render === 'points' ? source.label.replace(/\s+\(Punkte\)$/, '') : source.label) + ' · Ø ' + period + ' Ticks', dash: ['6 3', '2 3', '10 3 2 3', '9 5'][index % 4],
+    label: (source.render === 'points' ? source.label.replace(/\s+\((Punkte|Details)\)$/, '') : source.label) + ' · Ø ' + period + ' Ticks', dash: ['6 3', '2 3', '10 3 2 3', '9 5'][index % 4],
     values: movingAverage(rows, row => source.value ? source.value(row) : row[source.key], period, row => tickOrdinal(grain === 'week' ? row.week || row.day : row.day, grain)),
   })));
 }

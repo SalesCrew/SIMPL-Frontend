@@ -2,13 +2,16 @@
 export function applyReadCycleAnalytics(script) {
   const change = (before, after) => { if (!script.includes(before)) throw Error('Read-cycle adapter target changed: ' + before.slice(0, 90)); script = script.replace(before, after); };
   change('const overlayMetrics={', 'const overlayMetrics={...readCycleMetrics,');
-  change("const sets={balance:", "const sets={cycle:['pace28','readCycle28'],balance:");
+  change("const sets={balance:", "const sets={cycle:['readCycle28','pace28'],balance:");
+  change("const overlayState={selected:['pace28','incomingPace'],", "const overlayState={readCycleDisplayVersion:2,selected:DATA.read_cycle?['readCycle28','pace28']:['pace28','incomingPace'],");
+  change("input.addEventListener('change',()=>{overlayState.selected=[...choices.querySelectorAll('input:checked')].map(i=>i.value);", "input.addEventListener('change',()=>{overlayState.selected=selectReadCycleMetrics([...choices.querySelectorAll('input:checked')].map(i=>i.value),input.value);for(const node of choices.querySelectorAll('input'))node.checked=overlayState.selected.includes(node.value);");
+  change('function initDeepControls(){', "function setReadCycleDetails(show){overlayState.selected=selectReadCycleMetrics(show?[...overlayState.selected,'readCycleDaily']:overlayState.selected.filter(key=>key!=='readCycleDaily'));for(const input of $('overlay-choices').querySelectorAll('input'))input.checked=overlayState.selected.includes(input.value);drawOverlay(calc());}\nfunction initDeepControls(){");
   change("const overlayFamily={week:", "const overlayFamily={hours:'Kalenderstunden / Task',week:");
   change('const dailySeries=progressSeries(base,state.from,dayEnd,state.historyStart,today).map((row,i)=>({...row,...flows[i]}));', 'const cycles=readCycleSeries(base,{from:state.from,through:dayEnd,historyStart:state.historyStart,snapshotDay:today,firstFullDay:DATA.read_cycle?.first_full_day});const dailySeries=progressSeries(base,state.from,dayEnd,state.historyStart,today).map((row,i)=>({...row,...flows[i],...cycles[i]}));');
   change(" if(settings.grain==='week'){", " const dailyRows=rows;\n if(settings.grain==='week'){");
   change('return {day:last.day,week,partial:group.length<7,values}', 'weightedReadCycleWeek(group,values);return {day:last.day,week,partial:group.length<7,values}');
   change('return {rows:chartRows,lines,axes:domains,', 'return {dailyRows,common:settings.common,grain:settings.grain,rows:chartRows,lines,axes:domains,');
-  change("label:settings.grain==='week'&&key==='count'?'Erledigt in dieser KW':metric.label", "label:settings.grain==='week'&&key==='readCycleDaily'?'Gelesen → Fertig · Ø je Abschluss-KW (Punkte)':settings.grain==='week'&&key==='count'?'Erledigt in dieser KW':metric.label");
+  change("label:settings.grain==='week'&&key==='count'?'Erledigt in dieser KW':metric.label", "label:settings.grain==='week'&&key==='readCycleDaily'?'Gelesen → Fertig · einzelne KW-Werte (Details)':settings.grain==='week'&&key==='count'?'Erledigt in dieser KW':metric.label");
   change('function metricMeaning(line,row){', "function metricMeaning(line,row){if(isReadCycle(line.key))return readCycleMeaning(line,row,overlayState.grain);");
   change("(i?'Rechts: ':'Links: ')+(a.family", "(f.width<500?(i?'R: ':'L: '):(i?'Rechts: ':'Links: '))+(a.family");
   change("a.family==='percent'?'%'", "a.family==='hours'?(f.width<500?'h/Task':'Kalenderstunden / Task'):a.family==='percent'?'%'");

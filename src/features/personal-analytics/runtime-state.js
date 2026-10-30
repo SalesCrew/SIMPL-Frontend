@@ -1,4 +1,5 @@
 // UI preferences stay in memory within the verified owner's mounted page only.
+import { restoreReadCycleSelection } from './read-cycle.js';
 export function restoreAnalyticsView({state,overlayState,data,weeks,projects,document,initial}){
  if(!initial)return;const saved=initial.state||{},overlay=initial.overlay||{},byId=id=>document.getElementById(id);
  const preset=['all','4','8'].includes(initial.preset)?initial.preset:null;
@@ -15,7 +16,8 @@ export function restoreAnalyticsView({state,overlayState,data,weeks,projects,doc
  byId('exclude-special').checked=state.excludeSpecial;byId('show-raw').checked=state.showRaw;
  for(const button of document.querySelectorAll('[data-preset]'))button.classList.toggle('active',button.dataset.preset===preset);
  const allowed=['readCycleDaily','readCycle28','pace28','incomingPace','median8','open','openOld','cumulative','count','mean14','phaseChange','flowRatio','cohort7','cohort14','cohort28'];
- if(Array.isArray(overlay.selected))overlayState.selected=[...new Set(overlay.selected.filter(k=>allowed.includes(k)))];
+ if(Array.isArray(overlay.selected))overlayState.selected=restoreReadCycleSelection(overlay.selected.filter(k=>allowed.includes(k)),overlay.readCycleDisplayVersion);
+ overlayState.readCycleDisplayVersion=2;
  if(['native','normalized'].includes(overlay.scale))overlayState.scale=overlay.scale;
  if(['day','week'].includes(overlay.grain))overlayState.grain=overlay.grain;
  if(typeof overlay.common==='boolean')overlayState.common=overlay.common;

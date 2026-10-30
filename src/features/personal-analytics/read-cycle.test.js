@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readCycleSeries, weightedReadCycleWeek, datasetReference, readCycleCSV, readCycleMeaning } from './read-cycle.js';
+import { readCycleSeries, weightedReadCycleWeek, datasetReference, readCycleCSV, readCycleMeaning, selectReadCycleMetrics, restoreReadCycleSelection } from './read-cycle.js';
 import { cleanThresholdState, resolvedThresholdRule, thresholdForLine, thresholdBackground } from './overlay-thresholds.js';
 const task = (id, day, hours, status = 'valid') => ({ id, output_date: day, read_to_finish_hours: hours, read_to_finish_status: status });
 const settings = { from: '2026-09-01', through: '2026-10-01', historyStart: '2026-05-01', snapshotDay: '2026-10-01', firstFullDay: '2026-09-01' };
@@ -7,6 +7,23 @@ const tasks = [task('long', '2026-09-02', 100), ...Array.from({ length: 9 }, (_,
 const rows = readCycleSeries(tasks, settings);
 const line = { key: 'readCycle28', axis: 0, unit: 'Kalenderstunden / Task', min: 0, max: 100 };
 const model = { normalized: false, axes: [{ side: 'left', family: 'hours' }], lines: [line], dailyRows: rows.filter(r => r.day < '2026-10-01').map(r => ({ day: r.day, values: r })), rows: [] };
+describe('duration trend with optional daily details', () => {
+  it('replaces legacy scatter selection with the existing 28-day trend without dropping other metrics', () => {
+    expect(restoreReadCycleSelection(['readCycleDaily', 'pace28', 'open'], undefined)).toEqual(['readCycle28', 'pace28', 'open']);
+    expect(restoreReadCycleSelection(['readCycle28', 'readCycleDaily', 'pace28'], 1)).toEqual(['readCycle28', 'pace28']);
+  });
+  it('preserves explicitly enabled detail observations in current snapshots', () => {
+    expect(restoreReadCycleSelection(['readCycle28', 'readCycleDaily', 'pace28'], 2)).toEqual(['readCycle28', 'readCycleDaily', 'pace28']);
+  });
+  it('adds the trend when enabling detail points, while respecting removal of the trend', () => {
+    expect(selectReadCycleMetrics(['pace28', 'readCycleDaily'], 'readCycleDaily')).toEqual(['pace28', 'readCycle28', 'readCycleDaily']);
+    expect(selectReadCycleMetrics(['pace28', 'readCycleDaily', 'open'], 'readCycle28')).toEqual(['pace28', 'open']);
+  });
+  it('keeps empty and unrelated selections independent of duration metrics', () => {
+    expect(restoreReadCycleSelection([], undefined)).toEqual([]);
+    expect(selectReadCycleMetrics(['open', 'open', 'count'])).toEqual(['open', 'count']);
+  });
+});
 describe('calendar read-to-finish metrics', () => {
   it('weights every task once, rather than averaging high-volume and low-volume days equally', () => {
     const last = rows.find(r => r.day === '2026-09-28');
