@@ -15,6 +15,9 @@ import { NumberField } from "./ui/NumberField";
 import { Toggle } from "./ui/Toggle";
 import { Avatar } from "./Board";
 import { Attachments } from "./Attachments";
+import { CardCreationAttachments } from "./CardCreationAttachments";
+import { CardCreationDraft, type CardDraftFile } from "../card-creation-draft";
+import { uploadAttachment } from "../attachments";
 import type { CardEditSession } from "../card-edit-session";
 import { CardTextField } from "./ui/CardTextField";
 import { useCommentViewport } from "./useCommentViewport";
@@ -142,6 +145,14 @@ export function CardEditor({
     }
   }, [card?.title, card?.description]);
   const [uploading, setUploading] = useState(false);
+  const [creation] = useState(() => new CardCreationDraft());
+  const [draftFiles, setDraftFiles] = useState<CardDraftFile[]>([]);
+  const [creationError, setCreationError] = useState("");
+  const [creationProgress, setCreationProgress] = useState({ label: "", percent: 0 });
+  const [, updateSavedFiles] = useState(0);
+  const creationAbort = useRef<AbortController | null>(null);
+  const creationLocked = !card && (uploading || creation.created);
+  useEffect(() => () => creationAbort.current?.abort(), []);
   const comments = state.comments
     .filter((c) => c.card_id === card?.id)
     .sort((a, b) => a.created_at.localeCompare(b.created_at));
@@ -152,20 +163,36 @@ export function CardEditor({
   );
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (uploading || card) return;
-    const newId = crypto.randomUUID();
-    const ok = await mutate({
-      type: "card.create",
-      id: newId,
-      title: title.trim(),
-      description,
-      column_id: columnId,
-      project_id: columnId,
-      assignee_id: assignee || null,
-      label_ids: labels,
-      checklists: checklistsForNewCard(description, draftChecklists),
-    });
-    if (ok) close();
+    if (busy || uploading || card || creationAbort.current) return;
+    const abort = new AbortController();
+    creationAbort.current = abort;
+    setUploading(true);
+    setCreationError("");
+    try {
+      const ok = await creation.save({
+        type: "card.create",
+        title: title.trim(),
+        description,
+        column_id: columnId,
+        project_id: columnId,
+        assignee_id: assignee || null,
+        label_ids: labels,
+        checklists: checklistsForNewCard(description, draftChecklists),
+      }, draftFiles, {
+        mutate,
+        upload: (id, file, signal, progress) => uploadAttachment(id, current.id, file, signal, progress),
+        signal: abort.signal,
+        progress: (label, percent) => setCreationProgress({ label, percent }),
+        saved: () => updateSavedFiles((value) => value + 1),
+      });
+      if (ok && !abort.signal.aborted) close();
+    } catch (error) {
+      if (!abort.signal.aborted) setCreationError(`${creation.created ? "Die Karte wurde erstellt. " : ""}${(error as Error).message} Deine übrigen Dateien bleiben hier zum erneuten Speichern erhalten.`);
+    } finally {
+      creationAbort.current = null;
+      setUploading(false);
+      setCreationProgress({ label: "", percent: 0 });
+    }
   }
   return (
     <Dialog
@@ -184,6 +211,7 @@ export function CardEditor({
         )
       }
       onClose={close}
+      preventClose={!card && uploading}
       closeOnOutside
     >
       <div className="card-detail">
@@ -199,7 +227,7 @@ export function CardEditor({
             onChange={setTitle}
             autoFocus
             maxLength={180}
-            disabled={busy}
+            disabled={busy || creationLocked}
             placeholder="Was möchtest du erledigen?"
             onSave={
               card
@@ -233,7 +261,7 @@ export function CardEditor({
                     });
                   else setColumnId(next);
                 }}
-                disabled={busy || uploading}
+                disabled={busy || uploading || creationLocked}
                 options={orderedColumns(state.columns)
                   .filter((c) => card || c.kind === "project")
                   .map((c) => ({
@@ -248,7 +276,7 @@ export function CardEditor({
               <Select
                 label="Zugewiesen an"
                 value={card ? card.assignee_id || "" : assignee}
-                disabled={busy}
+                disabled={busy || creationLocked}
                 onValueChange={(value) =>
                   card
                     ? void mutate({
@@ -282,7 +310,7 @@ export function CardEditor({
                 type="button"
                 className="text-button"
                 onClick={editLabels}
-                disabled={busy || uploading}
+                disabled={busy || uploading || creationLocked}
               >
                 <Plus size={12} />
                 Verwalten
@@ -295,7 +323,7 @@ export function CardEditor({
                   key={l.id}
                   aria-pressed={(card?.label_ids || labels).includes(l.id)}
                   className={`label ${l.color} ${(card?.label_ids || labels).includes(l.id) ? "chosen" : "unchosen"}`}
-                  disabled={busy}
+                  disabled={busy || creationLocked}
                   onClick={() =>
                     card
                       ? void mutate({
@@ -331,7 +359,7 @@ export function CardEditor({
             savedValue={card?.description}
             onChange={setDescription}
             maxLength={20000}
-            disabled={busy}
+            disabled={busy || creationLocked}
             placeholder="Ein bisschen Kontext macht Zusammenarbeit leichter …"
             placeholderSequence={descriptionPlaceholders}
             onSave={
@@ -354,7 +382,7 @@ export function CardEditor({
           <ChecklistBuilder
             value={draftChecklists}
             automatic={card ? undefined : checklistFromDescription(description)}
-            disabled={busy || uploading || checklistSlots === 0}
+            disabled={busy || uploading || creationLocked || checklistSlots === 0}
             maxLists={card ? checklistSlots : 19}
             onChange={setDraftChecklists}
           />
@@ -403,10 +431,16 @@ export function CardEditor({
               session={session}
             />
           ) : (
-            <p className="form-hint">
-              Nach dem Erstellen kannst du hier Screenshots und Dateien
-              anhängen.
-            </p>
+            <>
+              <CardCreationAttachments files={draftFiles} onChange={setDraftFiles}
+                disabled={busy || uploading} saved={creation.saved}
+                hasUpload={(id) => creation.hasUpload(id)} />
+              {creationProgress.label && <div className="attachment-upload" role="status">
+                <small>{creationProgress.label} · {creationProgress.percent} %</small>
+                <progress value={creationProgress.percent} max={100} />
+              </div>}
+              {creationError && <p className="attachment-message" role="alert">{creationError}</p>}
+            </>
           )}
           {card && (
             <div className="detail-status">
@@ -464,7 +498,7 @@ export function CardEditor({
                 {
                   <>
                     <Plus size={15} />
-                    Karte erstellen
+                    {uploading ? "Wird gespeichert …" : creation.created ? "Anhänge erneut speichern" : "Karte erstellen"}
                   </>
                 }
               </button>

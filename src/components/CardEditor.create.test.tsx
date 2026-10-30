@@ -25,17 +25,24 @@ beforeEach(() => { form.submit = undefined; });
 function setup(mutate: () => Promise<boolean>, existing = false) {
   const state = createSeed();
   const close = vi.fn();
-  renderToStaticMarkup(<TooltipProvider><CardEditor
+  const html = renderToStaticMarkup(<TooltipProvider><CardEditor
     state={state} current={state.profiles[0]} workspaceId="salescrew"
     card={existing ? state.cards[0] : undefined}
     busy={false} mutate={mutate} close={close} editLabels={() => {}}
   /></TooltipProvider>);
   expect(form.submit).toBeTypeOf("function");
   const event = { preventDefault: vi.fn() } as unknown as FormEvent;
-  return { close, submit: () => form.submit!(event), event };
+  return { close, submit: () => form.submit!(event), event, html };
 }
 
 describe("New card submission closes the creation dialog", () => {
+  it("offers files and pasted screenshots before the card has been created", () => {
+    const { html } = setup(vi.fn(async () => true));
+    expect(html).toContain('type="file" multiple=""');
+    expect(html).toContain('aria-label="Dateien auswählen"');
+    expect(html).toContain("Screenshots einfach mit Strg+V / ⌘V einfügen");
+    expect(html).not.toContain("Nach dem Erstellen kannst du hier");
+  });
   it("waits for creation to succeed, then closes exactly once", async () => {
     let finish!: (ok: boolean) => void;
     const mutate = vi.fn(() => new Promise<boolean>((resolve) => { finish = resolve; }));

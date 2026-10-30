@@ -18,6 +18,10 @@ After login, `account_access_context()` runs before any workspace loading. Accou
 
 The companion API is [SIMPL-Backend](https://github.com/SalesCrew/SIMPL-Backend), hosted at https://simpl-backend-production.up.railway.app. Auth, authorized board operations, Realtime, and uploads use Supabase directly with RLS. Account operations, attachment finalization/removal and every file download use the API. Downloads must not fall back to direct Storage URLs: live authorization is checked by the backend on every request, and client Storage reads are denied.
 
+## Attachments when creating a card
+
+The new-card form accepts selected files, dropped files and pasted screenshots before saving. These files stay local until submission; canceling an unsaved card creates no remote uploads. Saving creates the card first, then uploads through the existing authenticated attachment flow. The dialog closes after every selected attachment is confirmed. If an upload fails, the form keeps its files and retries against the same card, preserving completed uploads. The existing limits of 20 card attachments and 500 MB per file apply.
+
 ## Private Development analytics
 
 An ordinary app URL opens the Taskboard for every account. Navigation stores the selected page in the URL, so refreshing keeps that page; explicit `?view=insights` and meeting links still work. The verified owner's `Dein Fortschritt` navigation sits immediately above `Team & Zugänge`. Its permission check, lazy page download and initial data fetch share a responsive dashboard skeleton while the application navigation remains usable. The API independently verifies the owner, active account and existing workspace permissions; client visibility alone grants no access. Deploy the companion backend endpoint before this frontend.
