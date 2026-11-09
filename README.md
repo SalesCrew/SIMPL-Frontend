@@ -37,3 +37,7 @@ An ordinary app URL opens the Taskboard for every account. Navigation stores the
 The overlay quick selection “Menge & Durchlaufzeit” compares completion throughput with task-weighted calendar hours from the owner's native “Gelesen” stamp to “Fertig”. Daily and rolling 28-day views are selectable; imported review stamps and unsupported pairs remain excluded only from these metrics. In “Schwellenwerte”, “Durchschnitt einer Datenreihe” creates a dynamically recalculated horizontal mean reference for a chosen displayed series and period, preserving native/normalized axis semantics. See [metric and reference details](docs/private-meeting-context.md).
 
 The imported report code is checked in, with source hashes in `source-provenance.json`. `scripts/import-personal-analytics.mjs` is an optional maintainer import for the original report code and static markup; it does not import data and is not part of the normal build. Preserve the app adapters and run the analytics tests after importing.
+
+## Native Mac companion
+
+The SwiftUI app and WidgetKit extension are versioned in [mac-widget](mac-widget/README.md). Native builds are separate from the Vercel website.
