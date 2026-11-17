@@ -5,6 +5,7 @@ import { CircleHelp, LoaderCircle, RefreshCw, X } from "lucide-react";
 import { Select } from "../../components/ui/Select";
 import { canRequestPersonalAnalytics } from "./access";
 import { fetchPersonalAnalytics, PersonalAnalyticsError } from "./api";
+import { startLiveRefresh } from "./live-refresh";
 import { mountPersonalAnalytics } from "./report-runtime.js";
 import { MovingAverageControl } from "./MovingAverageControl";
 import { ThresholdControl } from "./ThresholdControl";
@@ -58,17 +59,23 @@ export default function PersonalAnalyticsPage({ actorId, revision }: { actorId: 
   const noteEarliestMeeting = useCallback((day: string | null) => setEarliestMeetingDate(day && payload?.meta.first_date && day < payload.meta.first_date ? day : null), [payload?.meta.first_date]);
   const [meetingLayout, setMeetingLayout] = useState<{ charts: MeetingChartLayout[]; panel: HTMLElement | null }>({ charts: [], panel: null });
   const refresh = useRef(() => setAttempt(n => n + 1));
+  const fetching = useRef(false);
+  const silentRefresh = useRef(false);
   const allowed = canRequestPersonalAnalytics(actorId);
+  useEffect(() => {
+    if (allowed) return startLiveRefresh(() => { silentRefresh.current = true; refresh.current(); }, () => fetching.current);
+  }, [allowed, actorId]);
   useEffect(() => {
     if (!allowed) { setPayload(null); return; }
     const controller = new AbortController(); let active = true;
-    setLoading(true); setError(""); setMountError("");
+    fetching.current = true;
+    setLoading(!silentRefresh.current); silentRefresh.current = false; setError(""); setMountError("");
     void fetchPersonalAnalytics(controller.signal).then(data => { if (active) setPayload(data); }, failure => {
       if (!active || controller.signal.aborted) return;
       if (failure instanceof PersonalAnalyticsError && [401, 403, 404].includes(failure.status)) setPayload(null);
       setError(failure instanceof Error ? failure.message : "Die Auswertung konnte nicht geladen werden.");
-    }).finally(() => { if (active) setLoading(false); });
-    return () => { active = false; controller.abort(); };
+    }).finally(() => { if (active) { fetching.current = false; setLoading(false); } });
+    return () => { active = false; fetching.current = false; controller.abort(); };
   }, [actorId, allowed, revision, attempt]);
   useEffect(() => {
     if (!allowed || !payload || !host.current) return;

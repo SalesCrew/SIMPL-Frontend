@@ -40,7 +40,7 @@ export function createMovingAverageRuntime({ document, options, lifecycle, helpe
     }
   }
   function compact(s, id, originalLines) {
-    const primary = originalLines.at(-1).key, state = getState(), sourceRows = s.dailySeries.filter(row => Number.isFinite(row[primary]));
+    const primary = originalLines.at(-1).key, state = getState(), sourceRows = s.dailySeries.filter(row => id === 'daily-chart' && state.showRaw ? row.day >= state.historyStart && Number.isFinite(row.count) : Number.isFinite(row[primary]));
     const sources = id === 'daily-chart' ? [{ key: 'count', label: 'An diesem Tag erledigt', color: '#8063a0', unit: 'erledigte Tasks / Tag' }, { key: 'mean14', label: 'Erledigt pro Tag · vorhandener 14-Tage-Trend', color: '#a86b3c', unit: 'erledigte Tasks / Tag' }] : originalLines.map(line => ({ ...line, label: primary === 'pace28' ? 'Erledigt pro Woche · 28-Tage-Trend' : primary === 'flowRatio' ? 'Erledigte ÷ neu angelegte Tasks · 28 Tage' : primary === 'phaseChange' ? 'Änderung der Erledigungen · 28 vs. 28 Tage' : 'Erledigte Tasks · Summe im Zeitraum', color: '#8063a0', unit: ['flowRatio', 'phaseChange'].includes(primary) ? '%' : primary === 'pace28' ? 'erledigte Tasks / Woche' : 'erledigte Tasks insgesamt' }));
     configure(id, sources, 'day');
     const rows = sourceRows.map(row => ({ ...row, partial: row.partial || row.day < state.historyStart })), columns = averageColumns(rows, sources, settings[id], 'day');

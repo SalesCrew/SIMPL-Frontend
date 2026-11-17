@@ -37,9 +37,13 @@ describe('calendar read-to-finish metrics', () => {
     const result = readCycleSeries([task('zero', '2026-09-01', 0)], settings);
     expect(result[0].readCycleDaily).toBe(0); expect(result[1].readCycleDaily).toBeNull();
   });
-  it('requires a full native 28-day window, omits today and respects a later comparison boundary', () => {
+  it('requires native window coverage and respects a later comparison boundary', () => {
     expect(rows[26].readCycle28).toBeNull(); expect(rows[27].readCycle28).toBe(11.8); expect(rows.at(-1).readCycleDaily).toBeNull();
     expect(readCycleSeries(tasks, { ...settings, historyStart: '2026-09-15' }).every(r => r.readCycle28 === null)).toBe(true);
+  });
+  it('includes today\'s verified pairs in both live daily and weighted 28-day values', () => {
+    const result=readCycleSeries([...tasks,task('recent','2026-09-30',2),task('today','2026-10-01',4)],settings);
+    expect(result.at(-1)).toMatchObject({readCycleDaily:4,readCycle28:3,readCycle28N:2,readCycle28Hours:6});
   });
   it('keeps weighted weekly means and last-day rolling windows separate', () => {
     const values = { readCycle28: 123 };
