@@ -14,7 +14,7 @@ export function createMeetingChartBridge({document,options,lifecycle,getState}) 
    }
    const timeline=panel.querySelector('[data-average-timeline="'+id+'"]'),svg=timeline&&!timeline.hidden?timeline.querySelector('svg'):chart.querySelector('svg'),savedPlot=meetingPlot(svg),plot=savedPlot?{...savedPlot,width:svg.viewBox.baseVal.width,height:svg.viewBox.baseVal.height}:null;
    const onLabelChange=label=>{const select=document.getElementById('project-filter');if(!select||![...select.options].some(option=>option.value===label))return;select.value=label;select.dispatchEvent(new select.ownerDocument.defaultView.Event('change',{bubbles:true}));};
-   contexts.push({id,slot,panel,plot,onLabelChange,start:rangeStart,end:rangeEnd,rangeStart,rangeEnd,labelId:state.project,grain:plot?.grain||'day',left:2,right:2,independent:true});
+   contexts.push({id,slot,panel,plot,onLabelChange,labels:s.labelCatalogue,start:rangeStart,end:rangeEnd,rangeStart,rangeEnd,labelId:state.project,grain:plot?.grain||'day',left:2,right:2,independent:true});
   }
   options.onMeetingCharts(contexts,document.getElementById('meeting-context-slot'));
  }
