@@ -217,17 +217,32 @@ function drawCohorts(s){
  $('cohort-facts').textContent=n?hit+' von '+n+' Karten aus vollständig 7 Tage nachbeobachteten Eingangs-KW wurden binnen 7 Tagen fertig ('+dec.format(100*hit/n)+' %).':'Noch keine vollständig nachbeobachtete Eingangs-KW.';
 }
 function drawDistribution(s){
- const boxes=s.deep.boxes,el=$('distribution-chart');if(!boxes.length){el.replaceChildren(element('p','chart-empty','Keine vollständig beobachtete KW in dieser Auswahl.'));$('distribution-facts').textContent='';return}
- const f=deepFrame('distribution-chart',245),y=deepAxisY(f,Math.max(...boxes.map(b=>b.max)),'Abschlüsse je voller KW'),slot=f.pw/boxes.length;
- f.svg.setAttribute('aria-label','Boxplots der vollen Kalenderwochen, gruppiert nach Monat des Sonntags. Median, mittlere 50 Prozent, Minimum und Maximum; alle Wochen als Punkte.');
- boxes.forEach((b,i)=>{
-  const xx=f.left+slot*(i+.5),bw=Math.min(44,slot*.46),g=svgEl('g',{tabindex:0,role:'img','data-box-month':b.month,'aria-label':b.month+': Median '+b.median+', '+b.n+' volle KW, Minimum '+b.min+', Maximum '+b.max});
-  g.append(svgEl('line',{x1:xx,x2:xx,y1:y(b.max),y2:y(b.min),stroke:'#589b8b','stroke-width':1.5}),svgEl('line',{x1:xx-bw*.3,x2:xx+bw*.3,y1:y(b.max),y2:y(b.max),stroke:'#589b8b'}),svgEl('line',{x1:xx-bw*.3,x2:xx+bw*.3,y1:y(b.min),y2:y(b.min),stroke:'#589b8b'}),svgEl('rect',{x:xx-bw/2,y:y(b.q3),width:bw,height:Math.max(1,y(b.q1)-y(b.q3)),fill:'#d9eee5',stroke:'#589b8b',rx:2}),svgEl('line',{x1:xx-bw/2,x2:xx+bw/2,y1:y(b.median),y2:y(b.median),stroke:'#075c53','stroke-width':2.5}));
-  b.points.forEach((p,k)=>g.append(svgEl('circle',{cx:xx+((k%3)-1)*4,cy:y(p.count),r:2.8,fill:'#163f39','fill-opacity':.8,'data-week-point':p.week})));
-  const month=new Intl.DateTimeFormat('de-AT',{month:'short',timeZone:'UTC'}).format(utc(b.month+'-15'));g.append(svgEl('text',{x:xx,y:f.height-17,'text-anchor':'middle',class:'axis-text'},month),svgEl('text',{x:xx,y:f.height-3,'text-anchor':'middle',class:'axis-text'},b.n+' KW'));
-  const tip=e=>showTip(e,month+' · volle Kalenderwochen',[...averages.describe('distribution-chart',b.month),'Median: '+dec.format(b.median)+' Abschlüsse / KW','Mittlere 50 %: '+dec.format(b.q1)+'–'+dec.format(b.q3),'Min.–Max.: '+b.min+'–'+b.max+' · '+b.n+' Wochen',...b.points.map(p=>kw(p.week)+': '+p.count+' Abschlüsse'),b.n<4?'Wenige Wochen: Verteilung vorsichtig lesen.':'Alle Wochen einschließlich Nullwochen enthalten.']);g.addEventListener('pointerenter',tip);g.addEventListener('focus',tip);g.addEventListener('pointerleave',hideTip);g.addEventListener('blur',hideTip);f.svg.append(g);
+ const boxes=s.deep.boxes,rows=s.deep.fullWeeks,el=$('distribution-chart');if(!rows.length){el.replaceChildren(element('p','chart-empty','Keine vollständig beobachtete KW in dieser Auswahl.'));$('distribution-facts').textContent='';return}
+ const f=deepFrame('distribution-chart',245),y=deepAxisY(f,Math.max(...rows.map(w=>w.count)),'Abschlüsse je voller KW'),slot=f.pw/rows.length,x=i=>f.left+slot*(i+.5),barWidth=Math.min(22,slot*.66),monthPositions=[];
+ f.svg.setAttribute('aria-label','Wöchentliche Abschlüsse als Balken. Ein Balken pro vollständig beobachteter Kalenderwoche. Monatsmedian und mittlere 50 Prozent als Referenz; Minimum und Maximum in den Wochendetails.');
+ let offset=0;
+ boxes.forEach(b=>{
+  const start=f.left+offset*slot,width=b.n*slot,month=new Intl.DateTimeFormat('de-AT',{month:'short',timeZone:'UTC'}).format(utc(b.month+'-15'));
+  monthPositions.push(start+width/2);
+  const reference=svgEl('g',{'data-distribution-month':b.month,'aria-label':b.month+': Median '+b.median+', '+b.n+' volle KW, Minimum '+b.min+', Maximum '+b.max,'pointer-events':'none'});
+  reference.append(svgEl('rect',{x:start,y:y(b.q3),width,height:Math.max(1,y(b.q1)-y(b.q3)),fill:'#d9eee5','fill-opacity':.65}),svgEl('line',{x1:start,x2:start+width,y1:y(b.median),y2:y(b.median),stroke:'#075c53','stroke-width':1.5,'stroke-dasharray':'3 3','data-month-median':b.median}));
+  if(offset)reference.append(svgEl('line',{x1:start,x2:start,y1:f.top,y2:f.top+f.ph,stroke:'#e7ece6','stroke-dasharray':'2 4'}));
+  if(width>=20)reference.append(svgEl('text',{x:start+width/2,y:f.height-2,'text-anchor':'middle',class:'axis-text'},month));
+  f.svg.append(reference);offset+=b.n;
  });
- averages.distribution(s,f,boxes,i=>f.left+slot*(i+.5),y);const counts=s.deep.fullWeeks.map(w=>w.count),median=quantile(counts,.5),iqr=quantile(counts,.75)-quantile(counts,.25);$('distribution-facts').textContent=s.deep.fullWeeks.length+' volle KW: Median '+dec.format(median)+', mittlere 50 % von '+dec.format(quantile(counts,.25))+' bis '+dec.format(quantile(counts,.75))+' Abschlüssen. Streubreite dieser Mitte: '+dec.format(iqr)+' Tasks/KW. Jede Punktmarke ist eine echte KW.';
+ const groups=[],tickEvery=Math.max(1,Math.ceil(rows.length/Math.max(1,Math.floor(f.pw/46))));
+ rows.forEach((row,i)=>{
+  const b=boxes.find(box=>box.points.some(p=>p.week===row.week)),xx=x(i),g=svgEl('g',{tabindex:i===0?0:-1,role:'img',class:'weekly-bar-group','data-week-bar':row.week,'data-count':row.count,'aria-label':weekLabel(row.week)+' '+isoWeek(row.week).year+': '+row.count+' Abschlüsse. Monatsmedian '+dec.format(b.median)+', mittlere 50 Prozent '+dec.format(b.q1)+' bis '+dec.format(b.q3)+', Minimum '+b.min+', Maximum '+b.max});
+  g.append(svgEl('rect',{x:f.left+i*slot+1,y:f.top,width:Math.max(1,slot-2),height:f.ph,fill:'#33765b','fill-opacity':0,class:'weekly-bar-highlight'}));
+  if(row.count)g.append(svgEl('rect',{x:xx-barWidth/2,y:y(row.count),width:barWidth,height:y(0)-y(row.count),rx:1,fill:'#589b8b',class:'weekly-bar'}));
+  else g.append(svgEl('line',{x1:xx-barWidth/2,x2:xx+barWidth/2,y1:y(0),y2:y(0),stroke:'#589b8b','stroke-width':2,class:'weekly-zero'}));
+  const show=e=>showTip(e,weekLabel(row.week)+' · '+isoWeek(row.week).year,[row.count+' Abschlüsse in dieser vollen KW',...averages.describe('distribution-chart',b.month),'Monat des KW-Sonntags: '+new Intl.DateTimeFormat('de-AT',{month:'long',year:'numeric',timeZone:'UTC'}).format(utc(b.month+'-15')),'Median: '+dec.format(b.median)+' Abschlüsse / KW','Mittlere 50 %: '+dec.format(b.q1)+'–'+dec.format(b.q3),'Min.–Max.: '+b.min+'–'+b.max+' · '+b.n+' Wochen',b.n<4?'Wenige Wochen: Verteilung vorsichtig lesen.':'Alle Wochen einschließlich Nullwochen enthalten.']);
+  g.addEventListener('pointerenter',show);g.addEventListener('focus',e=>{for(const group of groups)group.setAttribute('tabindex',group===g?0:-1);show(e)});g.addEventListener('pointerleave',hideTip);g.addEventListener('blur',hideTip);
+  g.addEventListener('keydown',e=>{if(!['Home','End','ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();const next=e.key==='Home'?0:e.key==='End'?rows.length-1:Math.max(0,Math.min(rows.length-1,i+(e.key==='ArrowRight'?1:-1)));g.setAttribute('tabindex',-1);groups[next].setAttribute('tabindex',0);groups[next].focus()});
+  groups.push(g);f.svg.append(g);
+  if(i%tickEvery===0)f.svg.append(svgEl('text',{x:xx,y:f.height-17,'text-anchor':'middle',class:'axis-text'},kw(row.week)));
+ });
+ averages.distribution(s,f,boxes,i=>monthPositions[i],y);const counts=rows.map(w=>w.count),median=quantile(counts,.5),iqr=quantile(counts,.75)-quantile(counts,.25);$('distribution-facts').textContent=rows.length+' volle KW: Median '+dec.format(median)+', mittlere 50 % von '+dec.format(quantile(counts,.25))+' bis '+dec.format(quantile(counts,.75))+' Abschlüssen. Streubreite dieser Mitte: '+dec.format(iqr)+' Tasks/KW. Jeder Balken ist eine echte KW.';
 }
 const overlayMetrics={...readCycleMetrics,
  pace28:{label:'Erledigt pro Woche · 28-Tage-Durchschnitt',unit:'erledigte Tasks / Woche',family:'week',color:'#33765b',hint:'Erledigte Tasks der letzten 28 Kalendertage ÷ 4 Wochen.',description:'Erledigte Tasks der letzten 28 Kalendertage ÷ 4 Wochen. Jeder Punkt zeigt die durchschnittliche Wochenmenge dieses Fensters.',aggregation:'last'},
